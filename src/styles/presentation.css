@@ -1,0 +1,21 @@
+.presentation-mode .tree-node {
+  width: 240px;
+  padding: 15px 18px;
+  font-size: var(--font-size-lg);
+}
+
+.presentation-mode .react-flow__node {
+  font-size: var(--font-size-lg);
+  min-width: 240px;
+}
+
+.presentation-mode .matrix-cell {
+  font-size: var(--font-size-md);
+  min-height: 120px;
+}
+
+.presentation-mode .matrix-cell-label,
+.presentation-mode .matrix-cell h2 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+}
