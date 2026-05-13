@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, TextArea } from '@/components/atoms'
 import { FileUploadTab, MicButton } from '@/components/molecules'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
+import { useUiStore } from '@/stores'
 
 type InputTab = 'text' | 'mic' | 'file'
 
@@ -14,6 +15,18 @@ interface InputPanelProps {
   onClear: () => void
 }
 
+const TAB_LABELS: Record<InputTab, string> = {
+  text: 'テキスト',
+  mic: 'マイク',
+  file: 'ファイル',
+}
+
+const TAB_ICONS: Record<InputTab, string> = {
+  text: '✎',
+  mic: '◉',
+  file: '▣',
+}
+
 export function InputPanel({
   text,
   isClassifying,
@@ -23,11 +36,22 @@ export function InputPanel({
 }: InputPanelProps) {
   const [activeTab, setActiveTab] = useState<InputTab>('text')
   const [interimText, setInterimText] = useState('')
+  const inputPanelExpanded = useUiStore((state) => state.inputPanelExpanded)
+  const toggleInputPanel = useUiStore((state) => state.toggleInputPanel)
   const textRef = useRef(text)
+  const wasClassifyingRef = useRef(false)
 
   useEffect(() => {
     textRef.current = text
   }, [text])
+
+  useEffect(() => {
+    if (wasClassifyingRef.current && !isClassifying && inputPanelExpanded) {
+      toggleInputPanel()
+    }
+
+    wasClassifyingRef.current = isClassifying
+  }, [inputPanelExpanded, isClassifying, toggleInputPanel])
 
   const appendText = (nextText: string) => {
     const trimmed = nextText.trim()
@@ -53,73 +77,89 @@ export function InputPanel({
   )
 
   return (
-    <section className="input-panel input-panel--tabs">
-      <div className="input-tabs" role="tablist" aria-label="入力方法">
-        <button
-          type="button"
-          role="tab"
-          className={`input-tab${activeTab === 'text' ? ' input-tab--active' : ''}`}
-          onClick={() => setActiveTab('text')}
-        >
-          📝 テキスト
-        </button>
-        <button
-          type="button"
-          role="tab"
-          className={`input-tab${activeTab === 'mic' ? ' input-tab--active' : ''}`}
-          onClick={() => setActiveTab('mic')}
-        >
-          🎤 マイク
-        </button>
-        <button
-          type="button"
-          role="tab"
-          className={`input-tab${activeTab === 'file' ? ' input-tab--active' : ''}`}
-          onClick={() => setActiveTab('file')}
-        >
-          📁 ファイル
-        </button>
+    <section
+      className={`input-panel input-panel--tabs sv-inputpanel${inputPanelExpanded ? ' input-panel--expanded' : ' input-panel--collapsed'}`}
+      role="region"
+      aria-label="入力パネル"
+    >
+      <div
+        className="input-panel-toggle"
+        role="button"
+        tabIndex={0}
+        onClick={toggleInputPanel}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            toggleInputPanel()
+          }
+        }}
+      >
+        <span>{inputPanelExpanded ? '▼ 入力' : '▲ 入力'}</span>
+        <span>{inputPanelExpanded ? '折りたたむ' : '展開する'}</span>
       </div>
 
-      {activeTab === 'file' ? (
-        <FileUploadTab
-          onTranscribed={(transcribedText) => {
-            appendText(transcribedText)
-            setActiveTab('text')
-          }}
-        />
-      ) : (
-        <>
-          <div className="input-textarea-block">
-            <TextArea
-              value={text}
-              rows={activeTab === 'mic' ? 6 : 8}
-              placeholder="構造化したい文章を入力してください"
-              onChange={onChange}
-              onCommit={onStructurize}
-            />
-            <div className={`interim-text${errorMessage ? ' interim-text--error' : ''}`}>
-              {activeTab === 'mic' ? errorMessage ?? interimText : ''}
-            </div>
-          </div>
-          <div className="input-actions">
-            <Button variant="ghost" onClick={onClear} disabled={!text || isClassifying}>
-              クリア
-            </Button>
-            {activeTab === 'mic' && (
-              <MicButton status={status} onToggle={toggleListening} isSupported={isSupported} />
-            )}
-            <Button
-              variant="primary"
-              loading={isClassifying}
-              onClick={onStructurize}
-              disabled={!text.trim()}
+      <div className={`input-panel-content ${inputPanelExpanded ? 'expanded' : 'collapsed'}`}>
+        <div className="input-tabs sv-tabs" role="tablist" aria-label="入力方法">
+          {(['text', 'mic', 'file'] as InputTab[]).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              className={`input-tab sv-tab${activeTab === tab ? ' input-tab--active' : ''}`}
+              onClick={() => setActiveTab(tab)}
             >
-              構造化
-            </Button>
-          </div>
-        </>
-      )}
+              <span className="sv-tab__icon" aria-hidden>
+                {TAB_ICONS[tab]}
+              </span>
+              <span>{TAB_LABELS[tab]}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="sv-tabpanel">
+        {activeTab === 'file' ? (
+          <FileUploadTab
+            onTranscribed={(transcribedText) => {
+              appendText(transcribedText)
+              setActiveTab('text')
+            }}
+          />
+        ) : (
+          <>
+            <div className="input-textarea-block">
+              <TextArea
+                className="sv-textarea"
+                value={text}
+                rows={activeTab === 'mic' ? 6 : 8}
+                placeholder="構造化したい文章を入力してください"
+                onChange={onChange}
+                onCommit={onStructurize}
+              />
+              <div className={`interim-text${errorMessage ? ' interim-text--error' : ''}`}>
+                {activeTab === 'mic' ? errorMessage ?? interimText : ''}
+              </div>
+            </div>
+            <div className="input-actions">
+              <Button variant="ghost" onClick={onClear} disabled={!text || isClassifying}>
+                クリア
+              </Button>
+              {activeTab === 'mic' && (
+                <MicButton status={status} onToggle={toggleListening} isSupported={isSupported} />
+              )}
+              <Button
+                variant="primary"
+                loading={isClassifying}
+                onClick={onStructurize}
+                disabled={!text.trim()}
+              >
+                構造化
+              </Button>
+            </div>
+          </>
+        )}
+        </div>
+      </div>
     </section>
   )
 }

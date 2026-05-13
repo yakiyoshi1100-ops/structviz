@@ -39,7 +39,7 @@ function checkFile(file: File): FileCheckResult {
     return {
       ok: false,
       severity: 'error',
-      message: `❌ このファイルは処理できません。サイズ ${sizeMB.toFixed(1)}MB がOpenAI APIの上限（25MB）を超えています。ファイルを分割してください。`,
+      message: `このファイルは処理できません。サイズ ${sizeMB.toFixed(1)}MB がOpenAI APIの上限（25MB）を超えています。ファイルを分割してください。`,
     }
   }
 
@@ -47,7 +47,7 @@ function checkFile(file: File): FileCheckResult {
     return {
       ok: true,
       severity: 'warning',
-      message: `⚠️ ファイルサイズ ${sizeMB.toFixed(1)}MB。文字起こしに数分かかる場合があります。`,
+      message: `ファイルサイズ ${sizeMB.toFixed(1)}MB。文字起こしに数分かかる場合があります。`,
     }
   }
 
@@ -55,14 +55,14 @@ function checkFile(file: File): FileCheckResult {
     return {
       ok: true,
       severity: 'warning',
-      message: `⚠️ ファイルサイズ ${sizeMB.toFixed(1)}MB。文字起こしに1〜2分かかる場合があります。`,
+      message: `ファイルサイズ ${sizeMB.toFixed(1)}MB。文字起こしに1〜2分かかる場合があります。`,
     }
   }
 
   return {
     ok: true,
     severity: 'ok',
-    message: `✅ ${sizeMB.toFixed(1)}MB。処理可能です。`,
+    message: `${sizeMB.toFixed(1)}MB。処理可能です。`,
   }
 }
 
@@ -88,7 +88,8 @@ export function FileUploadTab({ onTranscribed }: FileUploadTabProps) {
     <div className="file-upload-tab">
       <button
         type="button"
-        className={`file-drop-area${isDragOver ? ' file-drop-area--dragover' : ''}`}
+        className={`file-drop-area sv-drop${isDragOver ? ' file-drop-area--dragover' : ''}`}
+        data-over={isDragOver ? 'true' : 'false'}
         onClick={() => inputRef.current?.click()}
         onDragEnter={(event) => {
           event.preventDefault()
@@ -105,9 +106,27 @@ export function FileUploadTab({ onTranscribed }: FileUploadTabProps) {
           selectFile(event.dataTransfer.files[0])
         }}
       >
-        <span className="file-drop-area__icon">📁</span>
-        <span className="file-drop-area__label">音声ファイルをドロップ または クリックして選択</span>
-        <span className="file-drop-area__formats">対応形式: .mp3 / .wav / .m4a / .webm / .mp4</span>
+        <span className="file-drop-area__icon sv-drop__icon" aria-hidden>
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+          >
+            <path d="M12 16V4M7 9l5-5 5 5" />
+            <path d="M5 20h14" />
+          </svg>
+        </span>
+        <span className="file-drop-area__label sv-drop__primary">
+          音声ファイルをドロップ または クリックして選択
+        </span>
+        <span className="file-drop-area__formats sv-drop__secondary">
+          対応形式: .mp3 / .wav / .m4a / .webm / .mp4
+        </span>
       </button>
       <input
         ref={inputRef}
@@ -123,7 +142,7 @@ export function FileUploadTab({ onTranscribed }: FileUploadTabProps) {
       {file && (
         <>
           <div className="file-selected">
-            <span>🎧</span>
+            <span aria-hidden>♪</span>
             <strong>{file.name}</strong>
             <span>{formatFileSize(file.size)}</span>
           </div>

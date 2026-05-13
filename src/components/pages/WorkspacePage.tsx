@@ -43,8 +43,10 @@ export function WorkspacePage() {
   const isAiReady = useConfigStore(selectIsAiReady)
   const mode = useConfigStore((state) => state.mode)
   const floatingPanelCollapsed = useUiStore((state) => state.floatingPanelCollapsed)
+  const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed)
   const settingsPanelOpen = useUiStore((state) => state.settingsPanelOpen)
   const setFloatingCollapsed = useUiStore((state) => state.setFloatingCollapsed)
+  const toggleSidebarCollapse = useUiStore((state) => state.toggleSidebarCollapse)
   const toggleSettings = useUiStore((state) => state.toggleSettings)
   const { onStructurize } = useClassification()
   const { onExport } = useExport(canvasRef)
@@ -121,7 +123,15 @@ export function WorkspacePage() {
     </header>
   )
 
-  const sidebar = <FrameworkSidebar active={activeFramework} onSelect={selectFramework} />
+  const sidebar = (
+    <FrameworkSidebar
+      active={activeFramework}
+      collapsed={sidebarCollapsed}
+      footer={unclassifiedBuffer}
+      onSelect={selectFramework}
+      onToggleCollapse={toggleSidebarCollapse}
+    />
+  )
   const overlays = (
     <>
       <SettingsPanel open={settingsPanelOpen} onClose={toggleSettings} />
@@ -145,7 +155,7 @@ export function WorkspacePage() {
         sidebar={sidebar}
         canvas={canvas}
         inputPanel={inputPanel}
-        unclassifiedBuffer={unclassifiedBuffer}
+        sidebarCollapsed={sidebarCollapsed}
       />
       {overlays}
     </>

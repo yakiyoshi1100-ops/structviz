@@ -8,6 +8,10 @@ interface UnclassifiedBufferProps {
 }
 
 export function UnclassifiedBuffer({ nodes, onDropToCanvas }: UnclassifiedBufferProps) {
+  if (nodes.length === 0) {
+    return null
+  }
+
   return (
     <aside
       className="unclassified-buffer"
@@ -22,17 +26,13 @@ export function UnclassifiedBuffer({ nodes, onDropToCanvas }: UnclassifiedBuffer
     >
       <header>
         <span>未分類バッファ</span>
-        <Badge label={String(nodes.length)} color={nodes.length > 0 ? 'blue' : 'gray'} />
+        <Badge label={String(nodes.length)} color="blue" />
       </header>
-      {nodes.length === 0 ? (
-        <p>未分類なし</p>
-      ) : (
-        <div className="unclassified-list">
-          {nodes.map((node) => (
-            <UnclassifiedItem key={node.id} node={node} onDragStart={() => undefined} />
-          ))}
-        </div>
-      )}
+      <div className="unclassified-list">
+        {nodes.map((node) => (
+          <UnclassifiedItem key={node.id} node={node} onDragStart={() => undefined} />
+        ))}
+      </div>
     </aside>
   )
 }

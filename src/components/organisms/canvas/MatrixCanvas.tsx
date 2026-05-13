@@ -9,6 +9,16 @@ interface MatrixCanvasProps {
   onNodeMove: (nodeId: string, position: StructuredNode['position']) => void
 }
 
+const TINT_COUNT = 8
+
+function splitCellLabel(label: string): { title: string; sub?: string } {
+  const [title, ...rest] = label.split('\n')
+  return {
+    title,
+    sub: rest.length > 0 ? rest.join(' / ') : undefined,
+  }
+}
+
 export function MatrixCanvas({ graph, onNodeEdit, onNodeMove }: MatrixCanvasProps) {
   const config = getMatrixConfig(graph.frameworkType)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -34,19 +44,21 @@ export function MatrixCanvas({ graph, onNodeEdit, onNodeMove }: MatrixCanvasProp
 
   return (
     <div
-      className="matrix-canvas"
+      className="matrix-canvas sv-matrix"
       style={{
         gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
         gridTemplateRows: `repeat(${config.rows}, minmax(0, 1fr))`,
       }}
     >
-      {config.cells.flat().map((cell) => {
+      {config.cells.flat().map((cell, index) => {
         const nodes = graph.nodes.filter((node) => node.role === cell.role)
+        const label = splitCellLabel(cell.label)
 
         return (
           <section
             key={cell.role}
-            className="matrix-cell"
+            className="matrix-cell sv-cell"
+            data-tint={(index % TINT_COUNT) + 1}
             style={{ '--cell-color': cell.color } as React.CSSProperties}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
@@ -57,12 +69,15 @@ export function MatrixCanvas({ graph, onNodeEdit, onNodeMove }: MatrixCanvasProp
               }
             }}
           >
-            <h2 className="matrix-cell-label">{cell.label}</h2>
-            <div className="matrix-node-list">
+            <header className="sv-cell__head">
+              <h2 className="matrix-cell-label sv-cell__title">{label.title}</h2>
+              {label.sub && <span className="sv-cell__sub">{label.sub}</span>}
+            </header>
+            <div className="matrix-node-list sv-cell__body">
               {nodes.map((node) => (
                 <article
                   key={node.id}
-                  className="matrix-node"
+                  className="matrix-node sv-cell-card"
                   draggable
                   onClick={() => startEdit(node)}
                   onDragStart={(event) => event.dataTransfer.setData('text/plain', node.id)}
