@@ -1,10 +1,14 @@
-import { FRAMEWORK_REGISTRY, FrameworkType } from '@/types'
+import type { ReactNode } from 'react'
 
 import { FrameworkCard } from '@/components/molecules'
+import { FRAMEWORK_REGISTRY, FrameworkType } from '@/types'
 
 interface FrameworkSidebarProps {
   active: FrameworkType | null
+  collapsed?: boolean
   onSelect: (framework: FrameworkType) => void
+  onToggleCollapse?: () => void
+  footer?: ReactNode
 }
 
 const sections = [
@@ -66,24 +70,43 @@ const sections = [
   },
 ]
 
-export function FrameworkSidebar({ active, onSelect }: FrameworkSidebarProps) {
+export function FrameworkSidebar({
+  active,
+  collapsed = false,
+  onSelect,
+  onToggleCollapse,
+  footer,
+}: FrameworkSidebarProps) {
   return (
-    <aside className="framework-sidebar">
-      {sections.map((section) => (
-        <section key={section.label} className="framework-section">
-          <h2>{section.label}</h2>
-          <div className="framework-list">
-            {section.frameworks.map((framework) => (
-              <FrameworkCard
-                key={framework}
-                definition={FRAMEWORK_REGISTRY[framework]}
-                active={active === framework}
-                onClick={onSelect}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
+    <aside className={`framework-sidebar ${collapsed ? 'collapsed' : 'expanded'}`}>
+      <button
+        type="button"
+        className="framework-sidebar-toggle"
+        title={collapsed ? 'サイドバーを展開' : 'サイドバーを折りたたむ'}
+        aria-label={collapsed ? 'サイドバーを展開' : 'サイドバーを折りたたむ'}
+        onClick={onToggleCollapse}
+      >
+        {collapsed ? '▶' : '◀'}
+      </button>
+      <div className="framework-sidebar-list">
+        {sections.map((section) => (
+          <section key={section.label} className="framework-section">
+            {!collapsed && <h2>{section.label}</h2>}
+            <div className="framework-list">
+              {section.frameworks.map((framework) => (
+                <FrameworkCard
+                  key={framework}
+                  definition={FRAMEWORK_REGISTRY[framework]}
+                  active={active === framework}
+                  collapsed={collapsed}
+                  onClick={onSelect}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+      {!collapsed && footer && <div className="framework-sidebar-footer">{footer}</div>}
     </aside>
   )
 }

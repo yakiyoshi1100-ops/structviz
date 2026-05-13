@@ -17,6 +17,8 @@ interface StoredUiState {
 export interface UiStore {
   sidebarOpen: boolean
   inputPanelOpen: boolean
+  inputPanelExpanded: boolean
+  sidebarCollapsed: boolean
   settingsPanelOpen: boolean
   exportMenuOpen: boolean
   floatingPanelPosition: FloatingPanelPosition
@@ -24,6 +26,7 @@ export interface UiStore {
   selectedNodeId: string | null
   toggleSidebar: () => void
   toggleInputPanel: () => void
+  toggleSidebarCollapse: () => void
   toggleSettings: () => void
   toggleExportMenu: () => void
   setFloatingPosition: (position: FloatingPanelPosition) => void
@@ -45,13 +48,21 @@ function getStoredFloatingPanelPosition(): FloatingPanelPosition {
 export const useUiStore = create<UiStore>((set) => ({
   sidebarOpen: true,
   inputPanelOpen: true,
+  inputPanelExpanded: true,
+  sidebarCollapsed: false,
   settingsPanelOpen: false,
   exportMenuOpen: false,
   floatingPanelPosition: getStoredFloatingPanelPosition(),
   floatingPanelCollapsed: false,
   selectedNodeId: null,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  toggleInputPanel: () => set((state) => ({ inputPanelOpen: !state.inputPanelOpen })),
+  toggleInputPanel: () =>
+    set((state) => ({
+      inputPanelOpen: !state.inputPanelOpen,
+      inputPanelExpanded: !state.inputPanelExpanded,
+    })),
+  toggleSidebarCollapse: () =>
+    set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   toggleSettings: () => set((state) => ({ settingsPanelOpen: !state.settingsPanelOpen })),
   toggleExportMenu: () => set((state) => ({ exportMenuOpen: !state.exportMenuOpen })),
   setFloatingPosition: (floatingPanelPosition) => {

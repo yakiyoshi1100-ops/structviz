@@ -31,29 +31,79 @@ export function ModeSelectPage({ onComplete }: ModeSelectPageProps) {
   }
 
   return (
-    <main className="mode-page">
+    <main className="mode-page sv-startup">
       <section className="mode-shell">
         <header className="mode-header">
-          <span>StructViz</span>
-          <h1>構造化する作業を始める</h1>
+          <div className="sv-startup__logo">
+            <div className="sv-startup__mark" aria-hidden>
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+              >
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                <path d="M14 17.5h7M17.5 14v7" />
+              </svg>
+            </div>
+            <h1 className="sv-startup__title">
+              Struct<em>Viz</em>
+            </h1>
+          </div>
+          <p className="sv-startup__tagline">
+            会議中のテキストや音声を、コンサルティングフレームワークへリアルタイムに構造化します。
+          </p>
         </header>
 
-        <div className="mode-grid">
+        <div className="mode-grid sv-modegrid" role="radiogroup" aria-label="分析モード">
           <button
             type="button"
-            className={`mode-card${selectedMode === 'standalone' ? ' mode-card--active' : ''}`}
+            role="radio"
+            aria-checked={selectedMode === 'standalone'}
+            className={`mode-card sv-modecard${selectedMode === 'standalone' ? ' mode-card--active' : ''}`}
+            data-variant="standalone"
+            data-selected={selectedMode === 'standalone' ? 'true' : 'false'}
             onClick={() => setSelectedMode('standalone')}
           >
-            <strong>スタンドアロン</strong>
-            <span>ブラウザ内のルールベース分類で、すぐに構造化します。</span>
+            <div className="sv-modecard__icon" aria-hidden>
+              ✓
+            </div>
+            <h2 className="sv-modecard__title">スタンドアロン</h2>
+            <p className="sv-modecard__desc">
+              APIキー不要。ブラウザ内のルールベース分類で、すばやく構造化します。
+            </p>
+            <div className="sv-modecard__meta">
+              <span>オフライン可</span>
+              <span className="sv-modecard__cta">すぐ開始</span>
+            </div>
           </button>
+
           <button
             type="button"
-            className={`mode-card${selectedMode === 'ai' ? ' mode-card--active' : ''}`}
+            role="radio"
+            aria-checked={selectedMode === 'ai'}
+            className={`mode-card sv-modecard${selectedMode === 'ai' ? ' mode-card--active' : ''}`}
+            data-variant="ai"
+            data-selected={selectedMode === 'ai' ? 'true' : 'false'}
             onClick={() => setSelectedMode('ai')}
           >
-            <strong>AIモード</strong>
-            <span>Claude API を使って、文脈を踏まえた分類を行います。</span>
+            <div className="sv-modecard__icon" aria-hidden>
+              ✦
+            </div>
+            <h2 className="sv-modecard__title">AIモード</h2>
+            <p className="sv-modecard__desc">
+              Claude APIで自然文の文脈を読み取り、より高精度に分類します。
+            </p>
+            <div className="sv-modecard__meta">
+              <span>APIキーが必要</span>
+              <span className="sv-modecard__cta">高精度</span>
+            </div>
           </button>
         </div>
 

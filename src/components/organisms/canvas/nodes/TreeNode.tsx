@@ -25,13 +25,36 @@ function getRoleClass(role: NodeRole, unclassified?: boolean): string {
   return 'tree-node--leaf'
 }
 
-export function TreeNode({ data }: NodeProps) {
+function getStyleRole(role: NodeRole, unclassified?: boolean): 'root' | 'branch' | 'leaf' | 'unclassified' {
+  if (unclassified || role === 'unclassified') {
+    return 'unclassified'
+  }
+
+  if (role === 'root' || role === 'problem' || role === 'theme' || role === 'goal') {
+    return 'root'
+  }
+
+  if (
+    role === 'cause' ||
+    role === 'argument' ||
+    role === 'approach' ||
+    role === 'category' ||
+    role === 'branch'
+  ) {
+    return 'branch'
+  }
+
+  return 'leaf'
+}
+
+export function TreeNode({ data, selected }: NodeProps) {
   const nodeData = data as TreeNodeData
   const { node, unclassified, onEdit } = nodeData
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(node.label)
   const confidence = Number(node.data?.confidence ?? 1)
   const isLowConfidence = confidence < 0.3
+  const styleRole = getStyleRole(node.role, unclassified)
 
   const commit = () => {
     setEditing(false)
@@ -46,11 +69,13 @@ export function TreeNode({ data }: NodeProps) {
 
   return (
     <div
-      className={`tree-node ${getRoleClass(node.role, unclassified)}${isLowConfidence ? ' low-confidence' : ''}`}
+      className={`tree-node sv-node ${getRoleClass(node.role, unclassified)}${isLowConfidence ? ' low-confidence' : ''}`}
+      data-role={styleRole}
+      data-selected={selected ? 'true' : 'false'}
+      title={node.label}
       onDoubleClick={() => setEditing(true)}
     >
-      <Handle type="target" position={Position.Top} />
-      <small>{node.role}</small>
+      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
       {editing ? (
         <input
           autoFocus
@@ -64,9 +89,12 @@ export function TreeNode({ data }: NodeProps) {
           }}
         />
       ) : (
-        <span>{node.label}</span>
+        <>
+          <span className="sv-node__label">{node.label}</span>
+          <small className="sv-node__hint">{node.role}</small>
+        </>
       )}
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
     </div>
   )
 }
