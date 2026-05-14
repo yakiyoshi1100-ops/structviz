@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, TextArea } from '@/components/atoms'
 import { FileUploadTab, MicButton } from '@/components/molecules'
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
-import { useUiStore } from '@/stores'
+import { useConfigStore, useUiStore } from '@/stores'
 
 type InputTab = 'text' | 'mic' | 'file'
 
@@ -36,6 +36,7 @@ export function InputPanel({
 }: InputPanelProps) {
   const [activeTab, setActiveTab] = useState<InputTab>('text')
   const [interimText, setInterimText] = useState('')
+  const mode = useConfigStore((state) => state.mode)
   const inputPanelExpanded = useUiStore((state) => state.inputPanelExpanded)
   const toggleInputPanel = useUiStore((state) => state.toggleInputPanel)
   const textRef = useRef(text)
@@ -76,90 +77,87 @@ export function InputPanel({
     },
   )
 
+  const actionLabel = mode === 'ai' ? 'AIで構造化' : '構造化する'
+
   return (
     <section
       className={`input-panel input-panel--tabs sv-inputpanel${inputPanelExpanded ? ' input-panel--expanded' : ' input-panel--collapsed'}`}
       role="region"
       aria-label="入力パネル"
     >
-      <div
-        className="input-panel-toggle"
-        role="button"
-        tabIndex={0}
-        onClick={toggleInputPanel}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            toggleInputPanel()
-          }
-        }}
-      >
+      <button type="button" className="input-panel-toggle" onClick={toggleInputPanel}>
         <span>{inputPanelExpanded ? '▼ 入力' : '▲ 入力'}</span>
         <span>{inputPanelExpanded ? '折りたたむ' : '展開する'}</span>
-      </div>
+      </button>
 
-      <div className={`input-panel-content ${inputPanelExpanded ? 'expanded' : 'collapsed'}`}>
-        <div className="input-tabs sv-tabs" role="tablist" aria-label="入力方法">
-          {(['text', 'mic', 'file'] as InputTab[]).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === tab}
-              className={`input-tab sv-tab${activeTab === tab ? ' input-tab--active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              <span className="sv-tab__icon" aria-hidden>
-                {TAB_ICONS[tab]}
-              </span>
-              <span>{TAB_LABELS[tab]}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="sv-tabpanel">
-        {activeTab === 'file' ? (
-          <FileUploadTab
-            onTranscribed={(transcribedText) => {
-              appendText(transcribedText)
-              setActiveTab('text')
-            }}
-          />
-        ) : (
-          <>
-            <div className="input-textarea-block">
-              <TextArea
-                className="sv-textarea"
-                value={text}
-                rows={activeTab === 'mic' ? 6 : 8}
-                placeholder="構造化したい文章を入力してください"
-                onChange={onChange}
-                onCommit={onStructurize}
-              />
-              <div className={`interim-text${errorMessage ? ' interim-text--error' : ''}`}>
-                {activeTab === 'mic' ? errorMessage ?? interimText : ''}
-              </div>
-            </div>
-            <div className="input-actions">
-              <Button variant="ghost" onClick={onClear} disabled={!text || isClassifying}>
-                クリア
-              </Button>
-              {activeTab === 'mic' && (
-                <MicButton status={status} onToggle={toggleListening} isSupported={isSupported} />
-              )}
-              <Button
-                variant="primary"
-                loading={isClassifying}
-                onClick={onStructurize}
-                disabled={!text.trim()}
+      {inputPanelExpanded && (
+        <div className="input-panel-content expanded">
+          <div className="input-tabs sv-tabs" role="tablist" aria-label="入力方法">
+            {(['text', 'mic', 'file'] as InputTab[]).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab}
+                className={`input-tab sv-tab${activeTab === tab ? ' input-tab--active' : ''}`}
+                onClick={() => setActiveTab(tab)}
               >
-                構造化
-              </Button>
-            </div>
-          </>
-        )}
+                <span className="sv-tab__icon" aria-hidden>
+                  {TAB_ICONS[tab]}
+                </span>
+                <span>{TAB_LABELS[tab]}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="sv-tabpanel">
+            {activeTab === 'file' ? (
+              <FileUploadTab
+                onTranscribed={(transcribedText) => {
+                  appendText(transcribedText)
+                  setActiveTab('text')
+                }}
+              />
+            ) : (
+              <>
+                <div className="input-textarea-block">
+                  <TextArea
+                    className="sv-textarea"
+                    value={text}
+                    rows={activeTab === 'mic' ? 5 : 6}
+                    placeholder="構造化したい文章を入力してください"
+                    onChange={onChange}
+                    onCommit={onStructurize}
+                  />
+                  <div className={`interim-text${errorMessage ? ' interim-text--error' : ''}`}>
+                    {activeTab === 'mic' ? errorMessage ?? interimText : ''}
+                  </div>
+                </div>
+                <div className="input-actions">
+                  <Button variant="ghost" onClick={onClear} disabled={!text || isClassifying}>
+                    クリア
+                  </Button>
+                  {activeTab === 'mic' && (
+                    <MicButton
+                      status={status}
+                      onToggle={toggleListening}
+                      isSupported={isSupported}
+                    />
+                  )}
+                  <Button
+                    variant="primary"
+                    loading={isClassifying}
+                    onClick={onStructurize}
+                    disabled={!text.trim()}
+                  >
+                    {actionLabel}
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   )
 }
