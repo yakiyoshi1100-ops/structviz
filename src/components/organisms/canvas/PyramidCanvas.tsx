@@ -95,8 +95,11 @@ function createNode(node: StructuredNode, layer: PyramidLayer): Node {
 }
 
 function applyPyramidLayout(nodes: Node[], _edges: Edge[]): Node[] {
-  const LAYER_Y: Record<PyramidLayer, number> = { conclusion: 0, argument: 220, evidence: 440 }
+  const LAYER_Y: Record<Exclude<PyramidLayer, 'evidence'>, number> = { conclusion: 0, argument: 220 }
+  const EVIDENCE_START_Y = 440
   const H_GAP = 40
+  const V_GAP = 30
+  const EVIDENCE_PER_ROW = 4
   const layers: Record<PyramidLayer, Node[]> = {
     conclusion: [],
     argument: [],
@@ -109,17 +112,13 @@ function applyPyramidLayout(nodes: Node[], _edges: Edge[]): Node[] {
 
   const positioned: Node[] = []
 
-  ;(['conclusion', 'argument', 'evidence'] as PyramidLayer[]).forEach((layer) => {
+  ;(['conclusion', 'argument'] as Exclude<PyramidLayer, 'evidence'>[]).forEach((layer) => {
     const layerNodes = layers[layer]
-    const sizes = layerNodes.map(() => NODE_SIZE[layer])
-    const totalWidth =
-      sizes.reduce((sum, size) => sum + size.width, 0) +
-      H_GAP * Math.max(layerNodes.length - 1, 0)
+    const size = NODE_SIZE[layer]
+    const totalWidth = layerNodes.length * size.width + H_GAP * Math.max(layerNodes.length - 1, 0)
     let cursorX = -totalWidth / 2
 
     layerNodes.forEach((node) => {
-      const size = NODE_SIZE[layer]
-
       positioned.push({
         ...node,
         position: {
@@ -131,6 +130,29 @@ function applyPyramidLayout(nodes: Node[], _edges: Edge[]): Node[] {
       cursorX += size.width + H_GAP
     })
   })
+
+  const evidenceNodes = layers.evidence
+  const size = NODE_SIZE.evidence
+
+  for (let rowStart = 0; rowStart < evidenceNodes.length; rowStart += EVIDENCE_PER_ROW) {
+    const rowNodes = evidenceNodes.slice(rowStart, rowStart + EVIDENCE_PER_ROW)
+    const rowIndex = rowStart / EVIDENCE_PER_ROW
+    const totalWidth = rowNodes.length * size.width + H_GAP * Math.max(rowNodes.length - 1, 0)
+    let cursorX = -totalWidth / 2
+    const rowY = EVIDENCE_START_Y + rowIndex * (size.height + V_GAP)
+
+    rowNodes.forEach((node) => {
+      positioned.push({
+        ...node,
+        position: {
+          x: cursorX,
+          y: rowY,
+        },
+      })
+
+      cursorX += size.width + H_GAP
+    })
+  }
 
   return positioned
 }
