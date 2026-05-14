@@ -64,17 +64,22 @@ function createEdges(grouped: ReturnType<typeof groupNodes>): Edge[] {
     id: `${root.id}-${node.id}`,
     source: root.id,
     target: node.id,
-    type: 'smoothstep',
+    type: 'step',
   }))
+  const visibleParentIds = new Set([
+    root.id,
+    ...grouped.arguments.map((node) => node.id),
+  ])
 
   const evidenceEdges = grouped.evidence.map((node, index) => {
-    const parent = grouped.arguments[index % Math.max(grouped.arguments.length, 1)] ?? root
+    const fallbackParent = grouped.arguments[index % Math.max(grouped.arguments.length, 1)] ?? root
+    const source = node.parentId && visibleParentIds.has(node.parentId) ? node.parentId : fallbackParent.id
 
     return {
-      id: `${parent.id}-${node.id}`,
-      source: parent.id,
+      id: `${source}-${node.id}`,
+      source,
       target: node.id,
-      type: 'smoothstep',
+      type: 'step',
     }
   })
 
@@ -187,8 +192,8 @@ export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
     if (flowNodes.length === 0) return
 
     const timer = window.setTimeout(() => {
-      flowInstanceRef.current?.fitView({ padding: 0.15, duration: 400 })
-    }, 300)
+      flowInstanceRef.current?.fitView({ padding: 0.1, duration: 400 })
+    }, 400)
 
     return () => window.clearTimeout(timer)
   }, [flowNodes])
