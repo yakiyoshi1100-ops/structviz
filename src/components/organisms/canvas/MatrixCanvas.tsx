@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import { useWheelZoom } from '@/hooks/useWheelZoom'
 import { FrameworkType, type FrameworkGraph, type NodeRole, type StructuredNode } from '@/types'
 import { getMatrixConfig } from './layouts/matrixLayout'
 
@@ -40,6 +41,7 @@ export function MatrixCanvas({ graph, onNodeEdit, onNodeMove }: MatrixCanvasProp
   const config = getMatrixConfig(graph.frameworkType)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState('')
+  const { scale, onWheel } = useWheelZoom()
   const variant = quadrantFrameworks.has(graph.frameworkType)
     ? 'quadrant'
     : flowFrameworks.has(graph.frameworkType)
@@ -66,71 +68,77 @@ export function MatrixCanvas({ graph, onNodeEdit, onNodeMove }: MatrixCanvasProp
 
   return (
     <div
-      className={`matrix-canvas sv-matrix framework-visual framework-visual--${variant} framework-visual--${frameworkClass(graph.frameworkType)}`}
-      style={{
-        gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
-        gridTemplateRows: `repeat(${config.rows}, minmax(0, 1fr))`,
-      }}
+      className="zoomable-canvas"
+      onWheel={onWheel}
     >
-      {graph.frameworkType === FrameworkType.SWOT && (
-        <>
-          <span className="matrix-axis matrix-axis--x">外部環境</span>
-          <span className="matrix-axis matrix-axis--y">内部環境</span>
-        </>
-      )}
-      {config.cells.flat().map((cell, index) => {
-        const nodes = graph.nodes.filter((node) => node.role === cell.role)
-        const label = splitCellLabel(cell.label)
+      <div
+        className={`zoomable-canvas__content matrix-canvas sv-matrix framework-visual framework-visual--${variant} framework-visual--${frameworkClass(graph.frameworkType)}`}
+        style={{
+          gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${config.rows}, minmax(0, 1fr))`,
+          transform: `scale(${scale})`,
+        }}
+      >
+        {graph.frameworkType === FrameworkType.SWOT && (
+          <>
+            <span className="matrix-axis matrix-axis--x">外部環境</span>
+            <span className="matrix-axis matrix-axis--y">内部環境</span>
+          </>
+        )}
+        {config.cells.flat().map((cell, index) => {
+          const nodes = graph.nodes.filter((node) => node.role === cell.role)
+          const label = splitCellLabel(cell.label)
 
-        return (
-          <section
-            key={cell.role}
-            className={`matrix-cell sv-cell framework-cell framework-cell--${variant}`}
-            data-tint={(index % TINT_COUNT) + 1}
-            style={{ '--cell-color': cell.color } as React.CSSProperties}
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              const nodeId = event.dataTransfer.getData('text/plain')
+          return (
+            <section
+              key={cell.role}
+              className={`matrix-cell sv-cell framework-cell framework-cell--${variant}`}
+              data-tint={(index % TINT_COUNT) + 1}
+              style={{ '--cell-color': cell.color } as React.CSSProperties}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                const nodeId = event.dataTransfer.getData('text/plain')
 
-              if (nodeId) {
-                moveToRole(nodeId, cell.role)
-              }
-            }}
-          >
-            <header className="sv-cell__head">
-              <h2 className="matrix-cell-label sv-cell__title">{label.title}</h2>
-              {label.sub && <span className="sv-cell__sub">{label.sub}</span>}
-            </header>
-            <div className="matrix-node-list sv-cell__body">
-              {nodes.map((node) => (
-                <article
-                  key={node.id}
-                  className="matrix-node sv-cell-card"
-                  draggable
-                  onClick={() => startEdit(node)}
-                  onDragStart={(event) => event.dataTransfer.setData('text/plain', node.id)}
-                >
-                  {editingId === node.id ? (
-                    <input
-                      autoFocus
-                      value={editingValue}
-                      onBlur={commitEdit}
-                      onChange={(event) => setEditingValue(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          commitEdit()
-                        }
-                      }}
-                    />
-                  ) : (
-                    node.label
-                  )}
-                </article>
-              ))}
-            </div>
-          </section>
-        )
-      })}
+                if (nodeId) {
+                  moveToRole(nodeId, cell.role)
+                }
+              }}
+            >
+              <header className="sv-cell__head">
+                <h2 className="matrix-cell-label sv-cell__title">{label.title}</h2>
+                {label.sub && <span className="sv-cell__sub">{label.sub}</span>}
+              </header>
+              <div className="matrix-node-list sv-cell__body">
+                {nodes.map((node) => (
+                  <article
+                    key={node.id}
+                    className="matrix-node sv-cell-card"
+                    draggable
+                    onClick={() => startEdit(node)}
+                    onDragStart={(event) => event.dataTransfer.setData('text/plain', node.id)}
+                  >
+                    {editingId === node.id ? (
+                      <input
+                        autoFocus
+                        value={editingValue}
+                        onBlur={commitEdit}
+                        onChange={(event) => setEditingValue(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            commitEdit()
+                          }
+                        }}
+                      />
+                    ) : (
+                      node.label
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          )
+        })}
+      </div>
     </div>
   )
 }

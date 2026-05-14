@@ -1,3 +1,4 @@
+import { useWheelZoom } from '@/hooks/useWheelZoom'
 import type { FrameworkGraph, StructuredNode } from '@/types'
 
 interface PyramidCanvasProps {
@@ -25,14 +26,19 @@ function groupNodes(nodes: StructuredNode[]): StructuredNode[][] {
 
 export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
   const levels = groupNodes(graph.nodes)
+  const { scale, onWheel } = useWheelZoom()
 
   return (
-    <div className="pyramid-canvas">
-      <div className="pyramid-stage">
+    <div className="pyramid-canvas zoomable-canvas" onWheel={onWheel}>
+      <div
+        className="pyramid-stage zoomable-canvas__content"
+        style={{ transform: `scale(${scale})` }}
+      >
         {levels.map((nodes, index) => (
           <section
             key={index}
             className="pyramid-level"
+            data-level-type={index === 0 ? 'conclusion' : index === 1 ? 'argument' : 'evidence'}
             style={{ '--level': index, '--level-count': levels.length } as React.CSSProperties}
           >
             <header>{index === 0 ? '結論' : index === 1 ? '根拠' : '事実・データ'}</header>
