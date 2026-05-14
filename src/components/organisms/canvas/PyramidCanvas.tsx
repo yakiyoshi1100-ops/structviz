@@ -117,6 +117,16 @@ function applyPyramidLayout(nodes: Node[], edges: Edge[]): Node[] {
 
   dagre.layout(dagreGraph)
 
+  console.log('[dagre output]', nodes.map((node) => {
+    const positioned = dagreGraph.node(node.id)
+    return {
+      id: node.id,
+      level: (node.data as any).level,
+      sizeUsed: NODE_SIZE[nodeLayer(node)],
+      dagrePos: positioned ? { x: positioned.x, y: positioned.y } : 'UNDEFINED',
+    }
+  }))
+
   return nodes.map((node) => {
     const positioned = dagreGraph.node(node.id)
     const size = NODE_SIZE[nodeLayer(node)]
