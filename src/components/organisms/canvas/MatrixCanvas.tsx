@@ -32,6 +32,10 @@ function splitCellLabel(label: string): { title: string; sub?: string } {
   }
 }
 
+function frameworkClass(type: FrameworkType): string {
+  return type.replace(/_/g, '-')
+}
+
 export function MatrixCanvas({ graph, onNodeEdit, onNodeMove }: MatrixCanvasProps) {
   const config = getMatrixConfig(graph.frameworkType)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -62,16 +66,16 @@ export function MatrixCanvas({ graph, onNodeEdit, onNodeMove }: MatrixCanvasProp
 
   return (
     <div
-      className={`matrix-canvas sv-matrix framework-visual framework-visual--${variant}`}
+      className={`matrix-canvas sv-matrix framework-visual framework-visual--${variant} framework-visual--${frameworkClass(graph.frameworkType)}`}
       style={{
         gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
         gridTemplateRows: `repeat(${config.rows}, minmax(0, 1fr))`,
       }}
     >
-      {variant === 'quadrant' && (
+      {graph.frameworkType === FrameworkType.SWOT && (
         <>
-          <span className="matrix-axis matrix-axis--x">外部 / 市場</span>
-          <span className="matrix-axis matrix-axis--y">内部 / 製品</span>
+          <span className="matrix-axis matrix-axis--x">外部環境</span>
+          <span className="matrix-axis matrix-axis--y">内部環境</span>
         </>
       )}
       {config.cells.flat().map((cell, index) => {
