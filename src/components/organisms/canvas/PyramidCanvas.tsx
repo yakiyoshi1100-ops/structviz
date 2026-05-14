@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   Background,
   Controls,
@@ -24,6 +24,8 @@ const NODE_SIZE: Record<PyramidLayer, { width: number; height: number }> = {
   argument: { width: 240, height: 90 },
   evidence: { width: 220, height: 90 },
 }
+const baseEdgeStyle: CSSProperties = { stroke: '#94a3b8', strokeWidth: 1.5 }
+const selectedEdgeStyle: CSSProperties = { stroke: '#ef4444', strokeWidth: 3 }
 
 function nodeLayer(node: Node): PyramidLayer {
   const level = (node.data as { level?: string }).level
@@ -65,6 +67,7 @@ function createEdges(grouped: ReturnType<typeof groupNodes>): Edge[] {
     source: root.id,
     target: node.id,
     type: 'step',
+    style: baseEdgeStyle,
   }))
   const visibleParentIds = new Set([
     root.id,
@@ -80,6 +83,7 @@ function createEdges(grouped: ReturnType<typeof groupNodes>): Edge[] {
       source,
       target: node.id,
       type: 'step',
+      style: baseEdgeStyle,
     }
   })
 
@@ -118,7 +122,7 @@ function createNode(
     id: node.id,
     position: { x: 0, y: 0 },
     draggable: true,
-    data: { label: `${marker}${node.label}`, rawLabel: node.label, level: layer },
+    data: { label: `${marker}${node.label}`, rawLabel: node.label, level: layer, parentId: node.parentId },
     className: `pyramid-flow-node pyramid-flow-node--${layer}`,
     style: {
       width: NODE_SIZE[layer].width,
@@ -132,6 +136,7 @@ function applyPyramidLayout(nodes: Node[], _edges: Edge[]): Node[] {
   const H_GAP = 40
   const V_GAP = 30
   const EVIDENCE_PER_ROW = 4
+  const parentByTarget = new Map(_edges.map((edge) => [edge.target, edge.source]))
   const layers: Record<PyramidLayer, Node[]> = {
     conclusion: [],
     argument: [],
@@ -143,6 +148,7 @@ function applyPyramidLayout(nodes: Node[], _edges: Edge[]): Node[] {
   })
 
   const positioned: Node[] = []
+  const argumentX = new Map<string, number>()
 
   ;(['conclusion', 'argument'] as Exclude<PyramidLayer, 'evidence'>[]).forEach((layer) => {
     const layerNodes = layers[layer]
@@ -159,15 +165,48 @@ function applyPyramidLayout(nodes: Node[], _edges: Edge[]): Node[] {
         },
       })
 
+      if (layer === 'argument') {
+        argumentX.set(node.id, cursorX)
+      }
+
       cursorX += size.width + H_GAP
     })
   })
 
   const evidenceNodes = layers.evidence
   const size = NODE_SIZE.evidence
+  const evidenceByParent = new Map<string, Node[]>()
+  const orphanEvidence: Node[] = []
 
-  for (let rowStart = 0; rowStart < evidenceNodes.length; rowStart += EVIDENCE_PER_ROW) {
-    const rowNodes = evidenceNodes.slice(rowStart, rowStart + EVIDENCE_PER_ROW)
+  evidenceNodes.forEach((node) => {
+    const dataParentId = (node.data as { parentId?: string | null }).parentId
+    const parentId = dataParentId ?? parentByTarget.get(node.id)
+
+    if (parentId && argumentX.has(parentId)) {
+      const siblings = evidenceByParent.get(parentId) ?? []
+      siblings.push(node)
+      evidenceByParent.set(parentId, siblings)
+    } else {
+      orphanEvidence.push(node)
+    }
+  })
+
+  evidenceByParent.forEach((children, parentId) => {
+    const parentX = argumentX.get(parentId) ?? 0
+
+    children.forEach((node, index) => {
+      positioned.push({
+        ...node,
+        position: {
+          x: parentX,
+          y: EVIDENCE_START_Y + index * (size.height + V_GAP),
+        },
+      })
+    })
+  })
+
+  for (let rowStart = 0; rowStart < orphanEvidence.length; rowStart += EVIDENCE_PER_ROW) {
+    const rowNodes = orphanEvidence.slice(rowStart, rowStart + EVIDENCE_PER_ROW)
     const rowIndex = rowStart / EVIDENCE_PER_ROW
     const totalWidth = rowNodes.length * size.width + H_GAP * Math.max(rowNodes.length - 1, 0)
     let cursorX = -totalWidth / 2
@@ -192,8 +231,9 @@ function applyPyramidLayout(nodes: Node[], _edges: Edge[]): Node[] {
 export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
   const flowInstanceRef = useRef<ReactFlowInstance | null>(null)
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
   const grouped = useMemo(() => groupNodes(graph.nodes), [graph.nodes])
-  const flowEdges = useMemo(() => createEdges(grouped), [grouped])
+  const flowEdges = useMemo<Edge[]>(() => createEdges(grouped), [grouped])
   const rawNodes = useMemo(() => {
     const rawNodes = [
       ...grouped.conclusion.map((node) =>
@@ -223,9 +263,15 @@ export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
     return hidden
   }, [collapsedIds, flowEdges])
 
-  const visibleEdges = useMemo(
-    () => flowEdges.filter((edge) => !hiddenIds.has(edge.source) && !hiddenIds.has(edge.target)),
-    [flowEdges, hiddenIds],
+  const visibleEdges = useMemo<Edge[]>(
+    () =>
+      flowEdges
+        .filter((edge) => !hiddenIds.has(edge.source) && !hiddenIds.has(edge.target))
+        .map((edge) => ({
+          ...edge,
+          style: edge.id === selectedEdgeId ? selectedEdgeStyle : baseEdgeStyle,
+        })),
+    [flowEdges, hiddenIds, selectedEdgeId],
   )
 
   const visibleNodes = useMemo(
@@ -284,6 +330,11 @@ export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
     if (next?.trim()) onNodeEdit(node.id, { label: next.trim() })
   }
 
+  const handleEdgeClick: NonNullable<ReactFlowProps['onEdgeClick']> = (event, edge) => {
+    event.stopPropagation()
+    setSelectedEdgeId(edge.id)
+  }
+
   return (
     <div className="pyramid-flow-canvas">
       <ReactFlow
@@ -301,6 +352,8 @@ export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
         }}
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
+        onEdgeClick={handleEdgeClick}
+        onPaneClick={() => setSelectedEdgeId(null)}
       >
         <Controls showZoom={false} showInteractive={false} position="bottom-right" />
         <Background gap={18} />
