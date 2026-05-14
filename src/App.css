@@ -2081,6 +2081,28 @@
   transform-origin: center;
 }
 
+.framework-visual--swot.framework-visual--quadrant {
+  padding: 56px 28px 28px 64px;
+}
+
+.framework-visual--swot.framework-visual--quadrant::before {
+  top: 56px;
+  bottom: 28px;
+}
+
+.framework-visual--swot.framework-visual--quadrant::after {
+  left: 64px;
+  right: 28px;
+}
+
+.framework-visual--swot .matrix-axis--x {
+  top: 18px;
+}
+
+.framework-visual--swot .matrix-axis--y {
+  left: 18px;
+}
+
 .framework-cell {
   z-index: 1;
 }
