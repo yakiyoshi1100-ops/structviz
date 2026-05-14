@@ -2023,3 +2023,69 @@
   min-height: 0;
 }
 
+/* ---------- Input panel collapse stability fixes ---------- */
+
+.input-panel.sv-inputpanel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.input-panel.sv-inputpanel.input-panel--expanded {
+  height: 320px;
+  min-height: 320px;
+}
+
+.input-panel.sv-inputpanel.input-panel--collapsed {
+  height: 36px;
+  min-height: 36px;
+}
+
+.input-panel.sv-inputpanel .input-panel-toggle {
+  flex: 0 0 36px;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.input-panel.sv-inputpanel .input-panel-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: none;
+  overflow: hidden;
+}
+
+.input-panel.sv-inputpanel .sv-tabs {
+  flex: 0 0 auto;
+}
+
+.input-panel.sv-inputpanel .sv-tabpanel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+}
+
+.input-panel.sv-inputpanel .input-textarea-block {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-panel.sv-inputpanel .textarea.sv-textarea {
+  flex: 1;
+  min-height: 96px;
+  resize: none;
+}
+
+.input-panel.sv-inputpanel .input-actions {
+  flex: 0 0 auto;
+  padding-top: 10px;
+}
+
