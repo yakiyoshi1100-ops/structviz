@@ -2023,6 +2023,25 @@
   min-height: 0;
 }
 
+/* ---------- Wheel zoom for non-React Flow renderers ---------- */
+
+.zoomable-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.zoomable-canvas__content {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  transform-origin: center center;
+  will-change: transform;
+}
+
 /* ---------- Framework-specific visual renderers ---------- */
 
 .framework-visual {
@@ -2190,6 +2209,18 @@
   overflow: hidden;
 }
 
+.pyramid-level[data-level-type='conclusion'] {
+  flex: 0 1 15%;
+}
+
+.pyramid-level[data-level-type='argument'] {
+  flex: 0 1 30%;
+}
+
+.pyramid-level[data-level-type='evidence'] {
+  flex: 0 1 55%;
+}
+
 .pyramid-level:first-child {
   color: var(--color-text-on-primary);
   background: var(--color-primary);
@@ -2211,6 +2242,8 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
+  align-content: flex-start;
+  align-items: flex-start;
   gap: 8px;
   overflow: auto;
 }
@@ -2227,6 +2260,27 @@
   font-size: clamp(11px, 2cqh, var(--font-size-sm));
   font-weight: 600;
   line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.pyramid-level[data-level-type='conclusion'] .pyramid-level-items {
+  align-content: center;
+  align-items: center;
+}
+
+.pyramid-level[data-level-type='conclusion'] .pyramid-node {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.pyramid-level[data-level-type='argument'] .pyramid-node {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
 }
 
 .pyramid-level:first-child .pyramid-node {

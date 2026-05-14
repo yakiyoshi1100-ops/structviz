@@ -85,6 +85,7 @@ export function TreeCanvas({
         edges={flowEdges}
         nodeTypes={nodeTypes}
         fitView
+        zoomOnScroll
         nodesDraggable={!readonly}
         nodesConnectable={false}
         onNodeDragStop={handleNodeDragStop}
