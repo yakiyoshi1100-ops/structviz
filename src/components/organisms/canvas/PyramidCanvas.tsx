@@ -144,6 +144,9 @@ export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
       ...grouped.evidence.map((node) => createNode(node, 'evidence')),
     ]
 
+    console.log('[dagre input] nodes:', rawNodes.map((node) => ({ id: node.id, level: (node.data as { level?: string }).level })))
+    console.log('[dagre input] edges:', flowEdges.map((edge) => ({ source: edge.source, target: edge.target })))
+
     return applyPyramidLayout(rawNodes, flowEdges)
   }, [grouped, flowEdges])
 
