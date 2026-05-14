@@ -75,7 +75,7 @@ export function TreeNode({ data, selected }: NodeProps) {
       title={node.label}
       onDoubleClick={() => setEditing(true)}
     >
-      <Handle type="target" position={Position.Top} style={{ opacity: 0 }} />
+      <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
       {editing ? (
         <input
           autoFocus
@@ -94,7 +94,7 @@ export function TreeNode({ data, selected }: NodeProps) {
           <small className="sv-node__hint">{node.role}</small>
         </>
       )}
-      <Handle type="source" position={Position.Bottom} style={{ opacity: 0 }} />
+      <Handle type="source" position={Position.Right} style={{ opacity: 0 }} />
     </div>
   )
 }
