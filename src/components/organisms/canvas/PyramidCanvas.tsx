@@ -8,7 +8,6 @@ import {
   type ReactFlowInstance,
   type ReactFlowProps,
 } from '@xyflow/react'
-import dagre from '@dagrejs/dagre'
 
 import type { FrameworkGraph, StructuredNode } from '@/types'
 
@@ -95,52 +94,45 @@ function createNode(node: StructuredNode, layer: PyramidLayer): Node {
   }
 }
 
-function applyPyramidLayout(nodes: Node[], edges: Edge[]): Node[] {
-  const dagreGraph = new dagre.graphlib.Graph()
-
-  dagreGraph.setDefaultEdgeLabel(() => ({}))
-  dagreGraph.setGraph({
-    rankdir: 'TB',
-    nodesep: 60,
-    ranksep: 120,
-    marginx: 40,
-    marginy: 40,
-  })
+function applyPyramidLayout(nodes: Node[], _edges: Edge[]): Node[] {
+  const LAYER_Y: Record<PyramidLayer, number> = { conclusion: 0, argument: 220, evidence: 440 }
+  const H_GAP = 40
+  const layers: Record<PyramidLayer, Node[]> = {
+    conclusion: [],
+    argument: [],
+    evidence: [],
+  }
 
   nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, NODE_SIZE[nodeLayer(node)])
+    layers[nodeLayer(node)].push(node)
   })
 
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target)
+  const positioned: Node[] = []
+
+  ;(['conclusion', 'argument', 'evidence'] as PyramidLayer[]).forEach((layer) => {
+    const layerNodes = layers[layer]
+    const sizes = layerNodes.map(() => NODE_SIZE[layer])
+    const totalWidth =
+      sizes.reduce((sum, size) => sum + size.width, 0) +
+      H_GAP * Math.max(layerNodes.length - 1, 0)
+    let cursorX = -totalWidth / 2
+
+    layerNodes.forEach((node) => {
+      const size = NODE_SIZE[layer]
+
+      positioned.push({
+        ...node,
+        position: {
+          x: cursorX,
+          y: LAYER_Y[layer],
+        },
+      })
+
+      cursorX += size.width + H_GAP
+    })
   })
 
-  dagre.layout(dagreGraph)
-
-  console.log('[dagre output]', nodes.map((node) => {
-    const positioned = dagreGraph.node(node.id)
-    return {
-      id: node.id,
-      level: (node.data as any).level,
-      sizeUsed: NODE_SIZE[nodeLayer(node)],
-      dagrePos: positioned ? { x: positioned.x, y: positioned.y } : 'UNDEFINED',
-    }
-  }))
-
-  return nodes.map((node) => {
-    const positioned = dagreGraph.node(node.id)
-    const size = NODE_SIZE[nodeLayer(node)]
-
-    return {
-      ...node,
-      position: positioned
-        ? {
-            x: positioned.x - size.width / 2,
-            y: positioned.y - size.height / 2,
-          }
-        : node.position,
-    }
-  })
+  return positioned
 }
 
 export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
