@@ -1,5 +1,6 @@
 import { FrameworkType, type FrameworkGraph, type NodeRole, type StructuredNode } from '@/types'
 import { MatrixCanvas } from './MatrixCanvas'
+import { PyramidCanvas } from './PyramidCanvas'
 import { TreeCanvas } from './TreeCanvas'
 
 interface CanvasRouterProps {
@@ -45,6 +46,10 @@ export function CanvasRouter({
         フレームワークを選択してテキストを入力してください
       </div>
     )
+  }
+
+  if (graph.frameworkType === FrameworkType.PYRAMID) {
+    return <PyramidCanvas graph={graph} onNodeEdit={onNodeEdit} />
   }
 
   if (matrixFrameworks.has(graph.frameworkType)) {

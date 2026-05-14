@@ -8,7 +8,7 @@ const NODE_HEIGHT = 86
 export function applyTreeLayout(
   nodes: StructuredNode[],
   edges: StructuredEdge[],
-  rankdir: 'TB' | 'BT' = 'TB',
+  rankdir: 'TB' | 'BT' | 'LR' = 'TB',
 ): StructuredNode[] {
   const graph = new dagre.graphlib.Graph()
 
