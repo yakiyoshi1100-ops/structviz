@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { FrameworkGraph, NodeRole, StructuredNode } from '@/types'
+import { FrameworkType, type FrameworkGraph, type NodeRole, type StructuredNode } from '@/types'
 import { getMatrixConfig } from './layouts/matrixLayout'
 
 interface MatrixCanvasProps {
@@ -10,6 +10,19 @@ interface MatrixCanvasProps {
 }
 
 const TINT_COUNT = 8
+const quadrantFrameworks = new Set<FrameworkType>([
+  FrameworkType.SWOT,
+  FrameworkType.ANSOFF,
+  FrameworkType.CROSS_SWOT,
+  FrameworkType.PRIORITY_MATRIX,
+  FrameworkType.PPM,
+])
+const flowFrameworks = new Set<FrameworkType>([
+  FrameworkType.BUSINESS_FLOW,
+  FrameworkType.VSM,
+  FrameworkType.DMAIC,
+  FrameworkType.CUSTOMER_JOURNEY,
+])
 
 function splitCellLabel(label: string): { title: string; sub?: string } {
   const [title, ...rest] = label.split('\n')
@@ -23,6 +36,11 @@ export function MatrixCanvas({ graph, onNodeEdit, onNodeMove }: MatrixCanvasProp
   const config = getMatrixConfig(graph.frameworkType)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState('')
+  const variant = quadrantFrameworks.has(graph.frameworkType)
+    ? 'quadrant'
+    : flowFrameworks.has(graph.frameworkType)
+      ? 'flow'
+      : 'cards'
 
   const startEdit = (node: StructuredNode) => {
     setEditingId(node.id)
@@ -44,12 +62,18 @@ export function MatrixCanvas({ graph, onNodeEdit, onNodeMove }: MatrixCanvasProp
 
   return (
     <div
-      className="matrix-canvas sv-matrix"
+      className={`matrix-canvas sv-matrix framework-visual framework-visual--${variant}`}
       style={{
         gridTemplateColumns: `repeat(${config.cols}, minmax(0, 1fr))`,
         gridTemplateRows: `repeat(${config.rows}, minmax(0, 1fr))`,
       }}
     >
+      {variant === 'quadrant' && (
+        <>
+          <span className="matrix-axis matrix-axis--x">外部 / 市場</span>
+          <span className="matrix-axis matrix-axis--y">内部 / 製品</span>
+        </>
+      )}
       {config.cells.flat().map((cell, index) => {
         const nodes = graph.nodes.filter((node) => node.role === cell.role)
         const label = splitCellLabel(cell.label)
@@ -57,7 +81,7 @@ export function MatrixCanvas({ graph, onNodeEdit, onNodeMove }: MatrixCanvasProp
         return (
           <section
             key={cell.role}
-            className="matrix-cell sv-cell"
+            className={`matrix-cell sv-cell framework-cell framework-cell--${variant}`}
             data-tint={(index % TINT_COUNT) + 1}
             style={{ '--cell-color': cell.color } as React.CSSProperties}
             onDragOver={(event) => event.preventDefault()}

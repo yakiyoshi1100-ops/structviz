@@ -2,7 +2,6 @@ import { useMemo } from 'react'
 import {
   Background,
   Controls,
-  MiniMap,
   ReactFlow,
   type Edge,
   type Node,
@@ -33,7 +32,7 @@ export function TreeCanvas({
   readonly = false,
 }: TreeCanvasProps) {
   const laidOutNodes = useMemo(() => {
-    const rankdir = graph.frameworkType === FrameworkType.PYRAMID ? 'BT' : 'TB'
+    const rankdir = graph.frameworkType === FrameworkType.PYRAMID ? 'BT' : 'LR'
     return applyTreeLayout(graph.nodes, graph.edges, rankdir)
   }, [graph])
 
@@ -90,7 +89,6 @@ export function TreeCanvas({
         nodesConnectable={false}
         onNodeDragStop={handleNodeDragStop}
       >
-        <MiniMap />
         <Controls />
         <Background gap={18} />
       </ReactFlow>
