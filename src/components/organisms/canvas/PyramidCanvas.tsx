@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Background,
   Controls,
@@ -86,12 +86,39 @@ function createEdges(grouped: ReturnType<typeof groupNodes>): Edge[] {
   return [...argumentEdges, ...evidenceEdges]
 }
 
-function createNode(node: StructuredNode, layer: PyramidLayer): Node {
+function getDescendantIds(nodeId: string, edges: Edge[]): Set<string> {
+  const result = new Set<string>()
+  const queue = [nodeId]
+
+  while (queue.length > 0) {
+    const current = queue.shift()!
+
+    edges
+      .filter((edge) => edge.source === current)
+      .forEach((edge) => {
+        if (!result.has(edge.target)) {
+          result.add(edge.target)
+          queue.push(edge.target)
+        }
+      })
+  }
+
+  return result
+}
+
+function createNode(
+  node: StructuredNode,
+  layer: PyramidLayer,
+  collapsedIds: Set<string>,
+  hasChildren: boolean,
+): Node {
+  const marker = hasChildren ? `${collapsedIds.has(node.id) ? '▶' : '▼'} ` : ''
+
   return {
     id: node.id,
     position: { x: 0, y: 0 },
     draggable: true,
-    data: { label: node.label, level: layer },
+    data: { label: `${marker}${node.label}`, rawLabel: node.label, level: layer },
     className: `pyramid-flow-node pyramid-flow-node--${layer}`,
     style: {
       width: NODE_SIZE[layer].width,
@@ -164,50 +191,104 @@ function applyPyramidLayout(nodes: Node[], _edges: Edge[]): Node[] {
 
 export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
   const flowInstanceRef = useRef<ReactFlowInstance | null>(null)
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set())
   const grouped = useMemo(() => groupNodes(graph.nodes), [graph.nodes])
   const flowEdges = useMemo(() => createEdges(grouped), [grouped])
-  const flowNodes = useMemo(() => {
+  const rawNodes = useMemo(() => {
     const rawNodes = [
-      ...grouped.conclusion.map((node) => createNode(node, 'conclusion')),
-      ...grouped.arguments.map((node) => createNode(node, 'argument')),
-      ...grouped.evidence.map((node) => createNode(node, 'evidence')),
+      ...grouped.conclusion.map((node) =>
+        createNode(node, 'conclusion', collapsedIds, flowEdges.some((edge) => edge.source === node.id)),
+      ),
+      ...grouped.arguments.map((node) =>
+        createNode(node, 'argument', collapsedIds, flowEdges.some((edge) => edge.source === node.id)),
+      ),
+      ...grouped.evidence.map((node) =>
+        createNode(node, 'evidence', collapsedIds, flowEdges.some((edge) => edge.source === node.id)),
+      ),
     ]
 
     console.log('[dagre input] nodes:', rawNodes.map((node) => ({ id: node.id, level: (node.data as { level?: string }).level })))
     console.log('[dagre input] edges:', flowEdges.map((edge) => ({ source: edge.source, target: edge.target })))
 
-    return applyPyramidLayout(rawNodes, flowEdges)
-  }, [grouped, flowEdges])
+    return rawNodes
+  }, [collapsedIds, flowEdges, grouped])
+
+  const hiddenIds = useMemo(() => {
+    const hidden = new Set<string>()
+
+    collapsedIds.forEach((id) => {
+      getDescendantIds(id, flowEdges).forEach((descendantId) => hidden.add(descendantId))
+    })
+
+    return hidden
+  }, [collapsedIds, flowEdges])
+
+  const visibleEdges = useMemo(
+    () => flowEdges.filter((edge) => !hiddenIds.has(edge.source) && !hiddenIds.has(edge.target)),
+    [flowEdges, hiddenIds],
+  )
+
+  const visibleNodes = useMemo(
+    () => applyPyramidLayout(rawNodes.filter((node) => !hiddenIds.has(node.id)), visibleEdges),
+    [hiddenIds, rawNodes, visibleEdges],
+  )
 
   useEffect(() => {
     console.log('[PyramidCanvas data]', {
       rawGraph: graph,
       grouped,
-      nodes: flowNodes,
-      edges: flowEdges,
+      nodes: visibleNodes,
+      edges: visibleEdges,
     })
-  }, [flowEdges, flowNodes, graph, grouped])
+  }, [graph, grouped, visibleEdges, visibleNodes])
 
   useEffect(() => {
-    if (flowNodes.length === 0) return
+    if (visibleNodes.length === 0) return
 
     const timer = window.setTimeout(() => {
       flowInstanceRef.current?.fitView({ padding: 0.1, duration: 400 })
     }, 400)
 
     return () => window.clearTimeout(timer)
-  }, [flowNodes])
+  }, [visibleNodes])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      flowInstanceRef.current?.fitView({ padding: 0.1, duration: 300 })
+    }, 200)
+
+    return () => window.clearTimeout(timer)
+  }, [collapsedIds])
+
+  const handleNodeClick: NonNullable<ReactFlowProps['onNodeClick']> = (_event, node) => {
+    const hasChildren = flowEdges.some((edge) => edge.source === node.id)
+
+    if (!hasChildren) return
+
+    setCollapsedIds((prev) => {
+      const next = new Set(prev)
+
+      if (next.has(node.id)) {
+        next.delete(node.id)
+      } else {
+        next.add(node.id)
+      }
+
+      return next
+    })
+  }
 
   const handleNodeDoubleClick: NonNullable<ReactFlowProps['onNodeDoubleClick']> = (_event, node) => {
-    const next = window.prompt('ノードを編集', String(node.data.label ?? ''))
+    const label = (node.data as { rawLabel?: string; label?: string }).rawLabel ?? node.data.label
+    const next = window.prompt('ノードを編集', String(label ?? ''))
     if (next?.trim()) onNodeEdit(node.id, { label: next.trim() })
   }
 
   return (
     <div className="pyramid-flow-canvas">
       <ReactFlow
-        nodes={flowNodes}
-        edges={flowEdges}
+        nodes={visibleNodes}
+        edges={visibleEdges}
         fitView
         fitViewOptions={{ padding: 0.15 }}
         zoomOnScroll
@@ -218,6 +299,7 @@ export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
           flowInstanceRef.current = instance
           window.setTimeout(() => instance.fitView({ padding: 0.15, duration: 400 }), 200)
         }}
+        onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
       >
         <Controls showZoom={false} showInteractive={false} position="bottom-right" />
