@@ -21,9 +21,9 @@ type PyramidLayer = 'conclusion' | 'argument' | 'evidence'
 
 const ROLE_ORDER = ['conclusion', 'argument', 'evidence', 'root', 'branch', 'leaf']
 const NODE_SIZE: Record<PyramidLayer, { width: number; height: number }> = {
-  conclusion: { width: 300, height: 86 },
-  argument: { width: 220, height: 78 },
-  evidence: { width: 200, height: 72 },
+  conclusion: { width: 320, height: 100 },
+  argument: { width: 240, height: 90 },
+  evidence: { width: 220, height: 90 },
 }
 
 function nodeLayer(node: Node): PyramidLayer {
@@ -99,8 +99,10 @@ function applyPyramidLayout(nodes: Node[], edges: Edge[]): Node[] {
   dagreGraph.setDefaultEdgeLabel(() => ({}))
   dagreGraph.setGraph({
     rankdir: 'TB',
-    nodesep: 40,
-    ranksep: 80,
+    nodesep: 60,
+    ranksep: 120,
+    marginx: 40,
+    marginy: 40,
   })
 
   nodes.forEach((node) => {
@@ -156,8 +158,8 @@ export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
     if (flowNodes.length === 0) return
 
     const timer = window.setTimeout(() => {
-      flowInstanceRef.current?.fitView({ padding: 0.2, duration: 300 })
-    }, 100)
+      flowInstanceRef.current?.fitView({ padding: 0.15, duration: 400 })
+    }, 300)
 
     return () => window.clearTimeout(timer)
   }, [flowNodes])
@@ -173,14 +175,14 @@ export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
         nodes={flowNodes}
         edges={flowEdges}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: 0.15 }}
         zoomOnScroll
         panOnDrag
         nodesDraggable
         nodesConnectable={false}
         onInit={(instance) => {
           flowInstanceRef.current = instance
-          window.setTimeout(() => instance.fitView({ padding: 0.2 }), 100)
+          window.setTimeout(() => instance.fitView({ padding: 0.15, duration: 400 }), 200)
         }}
         onNodeDoubleClick={handleNodeDoubleClick}
       >
