@@ -27,8 +27,10 @@ const NODE_SIZE: Record<PyramidLayer, { width: number; height: number }> = {
 }
 
 function nodeLayer(node: Node): PyramidLayer {
-  if (node.className?.toString().includes('--conclusion')) return 'conclusion'
-  if (node.className?.toString().includes('--argument')) return 'argument'
+  const level = (node.data as { level?: string }).level
+
+  if (level === 'conclusion') return 'conclusion'
+  if (level === 'argument') return 'argument'
   return 'evidence'
 }
 
@@ -85,7 +87,7 @@ function createNode(node: StructuredNode, layer: PyramidLayer): Node {
     id: node.id,
     position: { x: 0, y: 0 },
     draggable: true,
-    data: { label: node.label },
+    data: { label: node.label, level: layer },
     className: `pyramid-flow-node pyramid-flow-node--${layer}`,
     style: {
       width: NODE_SIZE[layer].width,
