@@ -7,6 +7,7 @@ import {
   type Node,
   type ReactFlowProps,
 } from '@xyflow/react'
+import dagre from '@dagrejs/dagre'
 
 import type { FrameworkGraph, StructuredNode } from '@/types'
 
@@ -15,12 +16,14 @@ interface PyramidCanvasProps {
   onNodeEdit: (nodeId: string, patch: Partial<Omit<StructuredNode, 'id'>>) => void
 }
 
+type PyramidLayer = 'conclusion' | 'argument' | 'evidence'
+
 const ROLE_ORDER = ['conclusion', 'argument', 'evidence', 'root', 'branch', 'leaf']
-const NODE_WIDTH = {
-  conclusion: 350,
-  argument: 280,
-  evidence: 280,
-} as const
+const NODE_SIZE: Record<PyramidLayer, { width: number; height: number }> = {
+  conclusion: { width: 300, height: 86 },
+  argument: { width: 220, height: 78 },
+  evidence: { width: 200, height: 72 },
+}
 
 function groupNodes(nodes: StructuredNode[]) {
   const conclusion = nodes.filter((node) => ['conclusion', 'root'].includes(node.role))
@@ -38,74 +41,106 @@ function groupNodes(nodes: StructuredNode[]) {
   }
 }
 
-function gridPosition(index: number, y: number) {
-  const col = index % 2
-  const row = Math.floor(index / 2)
-  return {
-    x: col === 0 ? -320 : 40,
-    y: y + row * 116,
-  }
+function createEdges(grouped: ReturnType<typeof groupNodes>): Edge[] {
+  const root = grouped.conclusion[0]
+
+  if (!root) return []
+
+  const argumentEdges = grouped.arguments.map((node) => ({
+    id: `${root.id}-${node.id}`,
+    source: root.id,
+    target: node.id,
+    type: 'smoothstep',
+  }))
+
+  const evidenceEdges = grouped.evidence.map((node, index) => {
+    const parent = grouped.arguments[index % Math.max(grouped.arguments.length, 1)] ?? root
+
+    return {
+      id: `${parent.id}-${node.id}`,
+      source: parent.id,
+      target: node.id,
+      type: 'smoothstep',
+    }
+  })
+
+  return [...argumentEdges, ...evidenceEdges]
 }
 
-function pyramidNode(
-  node: StructuredNode,
-  layer: 'conclusion' | 'argument' | 'evidence',
-  position: { x: number; y: number },
-): Node {
+function createNode(node: StructuredNode, layer: PyramidLayer): Node {
   return {
     id: node.id,
-    position,
+    position: { x: 0, y: 0 },
     draggable: true,
     data: { label: node.label },
     className: `pyramid-flow-node pyramid-flow-node--${layer}`,
     style: {
-      width: NODE_WIDTH[layer],
+      width: NODE_SIZE[layer].width,
     },
   }
+}
+
+function applyPyramidLayout(nodes: Node[], edges: Edge[]): Node[] {
+  const graph = new dagre.graphlib.Graph()
+
+  graph.setDefaultEdgeLabel(() => ({}))
+  graph.setGraph({
+    rankdir: 'TB',
+    nodesep: 40,
+    ranksep: 80,
+  })
+
+  nodes.forEach((node) => {
+    const layer = node.className?.toString().includes('--conclusion')
+      ? 'conclusion'
+      : node.className?.toString().includes('--argument')
+        ? 'argument'
+        : 'evidence'
+    const size = NODE_SIZE[layer]
+    graph.setNode(node.id, size)
+  })
+
+  edges.forEach((edge) => {
+    graph.setEdge(edge.source, edge.target)
+  })
+
+  dagre.layout(graph)
+
+  return nodes.map((node) => {
+    const positioned = graph.node(node.id)
+    const layer = node.className?.toString().includes('--conclusion')
+      ? 'conclusion'
+      : node.className?.toString().includes('--argument')
+        ? 'argument'
+        : 'evidence'
+    const size = NODE_SIZE[layer]
+
+    return {
+      ...node,
+      position: positioned
+        ? {
+            x: positioned.x - size.width / 2,
+            y: positioned.y - size.height / 2,
+          }
+        : node.position,
+    }
+  })
 }
 
 export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
   const grouped = useMemo(() => groupNodes(graph.nodes), [graph.nodes])
 
-  const flowNodes = useMemo<Node[]>(() => {
-    const argumentRows = Math.max(1, Math.ceil(grouped.arguments.length / 2))
-    const evidenceStartY = 210 + argumentRows * 116
+  const flowEdges = useMemo(() => createEdges(grouped), [grouped])
 
-    return [
-      ...grouped.conclusion.map((node) =>
-        pyramidNode(node, 'conclusion', { x: -NODE_WIDTH.conclusion / 2, y: 0 }),
-      ),
-      ...grouped.arguments.map((node, index) => pyramidNode(node, 'argument', gridPosition(index, 150))),
-      ...grouped.evidence.map((node, index) =>
-        pyramidNode(node, 'evidence', gridPosition(index, evidenceStartY)),
-      ),
+  const flowNodes = useMemo(() => {
+    const rawNodes = [
+      ...grouped.conclusion.map((node) => createNode(node, 'conclusion')),
+      ...grouped.arguments.map((node) => createNode(node, 'argument')),
+      ...grouped.evidence.map((node) => createNode(node, 'evidence')),
     ]
-  }, [grouped])
 
-  const flowEdges = useMemo<Edge[]>(() => {
-    const root = grouped.conclusion[0]
-
-    if (!root) return []
-
-    const argumentEdges = grouped.arguments.map((node) => ({
-      id: `${root.id}-${node.id}`,
-      source: root.id,
-      target: node.id,
-      type: 'smoothstep',
-    }))
-
-    const evidenceEdges = grouped.evidence.map((node, index) => {
-      const parent = grouped.arguments[index % Math.max(grouped.arguments.length, 1)] ?? root
-      return {
-        id: `${parent.id}-${node.id}`,
-        source: parent.id,
-        target: node.id,
-        type: 'smoothstep',
-      }
-    })
-
-    return [...argumentEdges, ...evidenceEdges]
-  }, [grouped])
+    return applyPyramidLayout(rawNodes, flowEdges)
+  }, [grouped, flowEdges])
 
   const handleNodeDoubleClick: NonNullable<ReactFlowProps['onNodeDoubleClick']> = (_event, node) => {
     const next = window.prompt('ノードを編集', String(node.data.label ?? ''))
@@ -125,7 +160,7 @@ export function PyramidCanvas({ graph, onNodeEdit }: PyramidCanvasProps) {
         nodesConnectable={false}
         onNodeDoubleClick={handleNodeDoubleClick}
       >
-        <Controls showZoom={false} showInteractive={false} position="bottom-left" />
+        <Controls showZoom={false} showInteractive={false} position="bottom-right" />
         <Background gap={18} />
       </ReactFlow>
     </div>
