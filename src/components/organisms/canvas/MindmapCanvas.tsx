@@ -244,14 +244,6 @@ function applyMindmapLayout(
     result.push(createFlowNode(node, 1, side, direction * H_GAP, y))
   })
 
-  console.log('[Mindmap layout]', result.map(n => ({
-    id: n.id,
-    label: (n.data as MindmapNodeData).rawLabel?.substring(0, 20),
-    side: (n.data as MindmapNodeData).side,
-    depth: (n.data as MindmapNodeData).depth,
-    position: n.position,
-  })))
-
   return result
 }
 
