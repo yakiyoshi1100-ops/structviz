@@ -1,4 +1,5 @@
 import { FrameworkType, type FrameworkGraph, type NodeRole, type StructuredNode } from '@/types'
+import { MindmapCanvas } from './MindmapCanvas'
 import { MatrixCanvas } from './MatrixCanvas'
 import { PyramidCanvas } from './PyramidCanvas'
 import { TreeCanvas } from './TreeCanvas'
@@ -46,6 +47,10 @@ export function CanvasRouter({
         フレームワークを選択してテキストを入力してください
       </div>
     )
+  }
+
+  if (graph.frameworkType === FrameworkType.WHY_TREE) {
+    return <MindmapCanvas graph={graph} onNodeEdit={onNodeEdit} />
   }
 
   if (graph.frameworkType === FrameworkType.PYRAMID) {
