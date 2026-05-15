@@ -35,11 +35,16 @@ const NODE_SIZE: Record<MindmapDepth, { width: number; height: number }> = {
   branch: { width: 200, height: 86 },
   leaf: { width: 180, height: 78 },
 }
-const H_GAP = 300
-const V_GAP = 120
+const H_GAP = 260
+const V_GAP = 80
 
 const baseEdgeStyle: CSSProperties = { stroke: '#94a3b8', strokeWidth: 1.6 }
 const selectedEdgeStyle: CSSProperties = { stroke: '#ef4444', strokeWidth: 3 }
+const edgeColorByDepth: Record<string, string> = {
+  '0': '#3b82f6',
+  '1': '#60a5fa',
+  '2': '#93c5fd',
+}
 
 function visualDepth(depth: number): MindmapDepth {
   if (depth === 0) return 'root'
@@ -64,7 +69,7 @@ function buildBaseEdges(nodes: StructuredNode[], graphEdges: StructuredEdge[], r
       id: edge.id,
       source: edge.source,
       target: edge.target,
-      type: 'smoothstep',
+      type: 'default',
       style: baseEdgeStyle,
     }))
 
@@ -76,7 +81,7 @@ function buildBaseEdges(nodes: StructuredNode[], graphEdges: StructuredEdge[], r
       id: `mindmap-${rootId}-${node.id}`,
       source: rootId,
       target: node.id,
-      type: 'smoothstep',
+      type: 'default',
       style: baseEdgeStyle,
     }))
 }
@@ -296,13 +301,19 @@ export function MindmapCanvas({ graph, onNodeEdit }: MindmapCanvasProps) {
     return visibleBaseEdges.map((edge) => {
       const sourceSide = nodeDataById.get(edge.source)?.side ?? 'right'
       const targetSide = nodeDataById.get(edge.target)?.side ?? 'right'
+      const sourceDepth = nodeDataById.get(edge.source)?.depth ?? 0
+      const depthKey = String(Math.min(sourceDepth, 2))
+      const dynamicStyle: CSSProperties = {
+        stroke: edgeColorByDepth[depthKey] ?? '#94a3b8',
+        strokeWidth: sourceDepth === 0 ? 2.5 : 2,
+      }
 
       return {
         ...edge,
-        type: 'smoothstep',
+        type: 'default',
         sourceHandle: sourceHandleFor(sourceSide, targetSide),
         targetHandle: targetHandleFor(targetSide),
-        style: edge.id === selectedEdgeId ? selectedEdgeStyle : baseEdgeStyle,
+        style: edge.id === selectedEdgeId ? selectedEdgeStyle : dynamicStyle,
       }
     })
   }, [flowNodes, selectedEdgeId, visibleBaseEdges])
