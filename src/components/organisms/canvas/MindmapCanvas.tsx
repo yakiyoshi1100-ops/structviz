@@ -135,6 +135,20 @@ function applyMindmapLayout(
   const result: Node<MindmapNodeData>[] = []
   const visited = new Set<string>()
 
+  const subtreeHeightCache = new Map<string, number>()
+  function getSubtreeHeight(nodeId: string): number {
+    if (subtreeHeightCache.has(nodeId)) return subtreeHeightCache.get(nodeId)!
+    const children = childrenMap.get(nodeId) ?? []
+    if (children.length === 0 || collapsedIds.has(nodeId)) {
+      subtreeHeightCache.set(nodeId, V_GAP)
+      return V_GAP
+    }
+
+    const total = children.reduce((sum, childId) => sum + getSubtreeHeight(childId), 0)
+    subtreeHeightCache.set(nodeId, total)
+    return total
+  }
+
   function createFlowNode(node: StructuredNode, depth: number, side: MindmapSide, x: number, y: number): Node<MindmapNodeData> {
     const hasChildren = (childrenMap.get(node.id) ?? []).length > 0
     const marker = hasChildren ? `${collapsedIds.has(node.id) ? '▶' : '▼'} ` : ''
@@ -158,24 +172,32 @@ function applyMindmapLayout(
     }
   }
 
-  function placeChildren(parentId: string, parentX: number, parentY: number, depth: number, side: MindmapSide): void {
+  function placeChildren(
+    parentId: string,
+    parentX: number,
+    parentY: number,
+    depth: number,
+    side: Exclude<MindmapSide, 'center'>,
+  ): void {
     const children = (childrenMap.get(parentId) ?? []).map((id) => nodeById.get(id)).filter((node): node is StructuredNode => Boolean(node))
     if (children.length === 0) return
 
-    const childSide = side === 'center' ? 'right' : side
-    const direction = childSide === 'left' ? -1 : 1
-    const totalHeight = children.length * V_GAP
-    let cursorY = parentY - totalHeight / 2 + V_GAP / 2
+    const direction = side === 'left' ? -1 : 1
+    const totalHeight = children.reduce((sum, child) => sum + getSubtreeHeight(child.id), 0)
+    let cursorY = parentY - totalHeight / 2
 
     children.forEach((child) => {
-      const x = parentX + direction * H_GAP
-      const y = cursorY
-      cursorY += V_GAP
+      const childSubtreeHeight = getSubtreeHeight(child.id)
+      const childY = cursorY + childSubtreeHeight / 2
+      const childX = parentX + direction * H_GAP
 
-      if (visited.has(child.id)) return
-      visited.add(child.id)
-      result.push(createFlowNode(child, depth, childSide, x, y))
-      placeChildren(child.id, x, y, depth + 1, childSide)
+      if (!visited.has(child.id)) {
+        visited.add(child.id)
+        result.push(createFlowNode(child, depth, side, childX, childY))
+        placeChildren(child.id, childX, childY, depth + 1, side)
+      }
+
+      cursorY += childSubtreeHeight
     })
   }
 
@@ -192,18 +214,21 @@ function applyMindmapLayout(
   function placeRootSide(children: StructuredNode[], side: Exclude<MindmapSide, 'center'>): void {
     if (children.length === 0) return
     const direction = side === 'left' ? -1 : 1
-    const totalHeight = children.length * V_GAP
-    let cursorY = -totalHeight / 2 + V_GAP / 2
+    const totalHeight = children.reduce((sum, child) => sum + getSubtreeHeight(child.id), 0)
+    let cursorY = -totalHeight / 2
 
     children.forEach((child) => {
-      const x = direction * H_GAP
-      const y = cursorY
-      cursorY += V_GAP
+      const childSubtreeHeight = getSubtreeHeight(child.id)
+      const childY = cursorY + childSubtreeHeight / 2
+      const childX = direction * H_GAP
 
-      if (visited.has(child.id)) return
-      visited.add(child.id)
-      result.push(createFlowNode(child, 1, side, x, y))
-      placeChildren(child.id, x, y, 2, side)
+      if (!visited.has(child.id)) {
+        visited.add(child.id)
+        result.push(createFlowNode(child, 1, side, childX, childY))
+        placeChildren(child.id, childX, childY, 2, side)
+      }
+
+      cursorY += childSubtreeHeight
     })
   }
 
