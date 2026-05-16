@@ -29,6 +29,7 @@ export interface RawGraphResponse {
 const nodeRoles = [
   'root',
   'branch',
+  'leaf',
   'problem',
   'cause',
   'root-cause',
