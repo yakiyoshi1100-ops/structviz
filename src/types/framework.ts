@@ -102,7 +102,7 @@ export const FRAMEWORK_REGISTRY: Record<FrameworkType, FrameworkDefinition> = {
     description: '漏れ・重複なく情報を整理する',
     category: '論理構造',
     visualization: 'tree',
-    nodeRoles: ['category', 'segment', 'overlap', 'gap'],
+    nodeRoles: ['root', 'branch', 'leaf', 'category', 'segment', 'overlap', 'gap'],
   },
   [FrameworkType.THREE_C]: {
     type: FrameworkType.THREE_C,
