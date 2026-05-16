@@ -33,12 +33,12 @@ interface MeceCanvasProps {
 const ROOT_Y = 0
 const BRANCH_Y = 180
 const LEAF_START_Y = 360
-const BRANCH_GAP = 260 // branch間の中心〜中心の横間隔
-const LEAF_GAP = 110 // leaf間の縦間隔
+const BRANCH_GAP = 240 // branch間の中心〜中心の横間隔
+const LEAF_GAP = 100 // leaf間の縦間隔
 
 const NODE_WIDTH: Record<MeceTier, number> = {
   root: 240,
-  branch: 220,
+  branch: 200,
   leaf: 200,
 }
 
@@ -305,6 +305,15 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
       })
     })
 
+    console.log(
+      '[MeceCanvas] flowNodes positions:',
+      out.map((node) => ({
+        id: node.id,
+        tier: (node.data as MeceNodeData).tier,
+        x: node.position.x,
+        y: node.position.y,
+      })),
+    )
     return out
   }, [branches, childrenMap, collapsedIds, hiddenIds, leaves, rootNode])
 
@@ -323,14 +332,14 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
   useEffect(() => {
     if (flowNodes.length === 0) return
     const timer = window.setTimeout(() => {
-      flowInstanceRef.current?.fitView({ padding: 0.18, duration: 400 })
+      flowInstanceRef.current?.fitView({ padding: 0.25, duration: 400 })
     }, 300)
     return () => window.clearTimeout(timer)
   }, [flowNodes])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      flowInstanceRef.current?.fitView({ padding: 0.18, duration: 300 })
+      flowInstanceRef.current?.fitView({ padding: 0.25, duration: 300 })
     }, 200)
     return () => window.clearTimeout(timer)
   }, [collapsedIds])
@@ -360,7 +369,8 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
         edges={visibleEdges}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.18 }}
+        fitViewOptions={{ padding: 0.25 }}
+        minZoom={0.1}
         zoomOnScroll
         panOnDrag
         nodesDraggable
@@ -368,7 +378,7 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
         elementsSelectable
         onInit={(instance) => {
           flowInstanceRef.current = instance
-          window.setTimeout(() => instance.fitView({ padding: 0.18, duration: 400 }), 250)
+          window.setTimeout(() => instance.fitView({ padding: 0.25, duration: 400 }), 250)
         }}
         onNodeClick={handleNodeClick}
         onNodeDoubleClick={handleNodeDoubleClick}
@@ -381,7 +391,7 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
         <Background gap={18} size={1} />
         <Controls showInteractive={false} showZoom={false} position="bottom-right">
           <ControlButton
-            onClick={() => flowInstanceRef.current?.fitView({ padding: 0.18, duration: 300 })}
+            onClick={() => flowInstanceRef.current?.fitView({ padding: 0.25, duration: 300 })}
             title="全体表示"
           >
             □
