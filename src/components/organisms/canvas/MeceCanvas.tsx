@@ -35,6 +35,10 @@ const BRANCH_Y = 180
 const LEAF_START_Y = 360
 const BRANCH_GAP = 240 // branch間の中心〜中心の横間隔
 const LEAF_GAP = 100 // leaf間の縦間隔
+const BRANCHES_PER_ROW = 5 // 1行に収めるbranchの最大数
+const BRANCH_ROW_HEIGHT = 200 // branchが折り返す際の行間（branch行間の縦幅）
+// branchのy座標からleafの先頭y座標までの距離（= LEAF_START_Y - BRANCH_Y）
+const LEAF_OFFSET_FROM_BRANCH = LEAF_START_Y - BRANCH_Y // 180
 
 const NODE_WIDTH: Record<MeceTier, number> = {
   root: 240,
@@ -261,9 +265,16 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
       })
     }
 
-    // branches（横並び、中心は0でセンタリング）と各leafを縦積み
+    // branches（5列で折り返し）と各leafを親branchの行に応じて縦積み
     visibleBranches.forEach((branch, index) => {
-      const centerX = -((n - 1) * BRANCH_GAP) / 2 + index * BRANCH_GAP
+      const row = Math.floor(index / BRANCHES_PER_ROW)
+      const col = index % BRANCHES_PER_ROW
+      // この行に実際に並ぶbranchの数（最終行は端数になりうる）
+      const nodesInThisRow = Math.min(BRANCHES_PER_ROW, n - row * BRANCHES_PER_ROW)
+      // 行内の全幅を (count-1) * GAP で計算し、中央を0に揃える
+      const rowSpan = (nodesInThisRow - 1) * BRANCH_GAP
+      const centerX = -rowSpan / 2 + col * BRANCH_GAP
+      const branchY = BRANCH_Y + row * BRANCH_ROW_HEIGHT
       const hasChildren = (childrenMap.get(branch.id) ?? []).length > 0
       const collapsed = collapsedIds.has(branch.id)
       const marker = hasChildren ? (collapsed ? '▶ ' : '▼ ') : ''
@@ -271,7 +282,7 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
       out.push({
         id: branch.id,
         type: 'meceNode',
-        position: { x: centerX - NODE_WIDTH.branch / 2, y: BRANCH_Y },
+        position: { x: centerX - NODE_WIDTH.branch / 2, y: branchY },
         data: {
           label: `${marker}${getNodeLabel(branch)}`,
           rawLabel: getNodeLabel(branch),
@@ -282,6 +293,8 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
         selectable: true,
       })
 
+      // leafは親branchのy座標に固定オフセットを足した位置から縦積み
+      const leafBaseY = branchY + LEAF_OFFSET_FROM_BRANCH
       const childIds = (childrenMap.get(branch.id) ?? []).filter((id) => !hiddenIds.has(id))
       childIds.forEach((leafId, leafIndex) => {
         const leaf = leaves.find((node) => node.id === leafId)
@@ -291,7 +304,7 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
           type: 'meceNode',
           position: {
             x: centerX - NODE_WIDTH.leaf / 2,
-            y: LEAF_START_Y + leafIndex * LEAF_GAP,
+            y: leafBaseY + leafIndex * LEAF_GAP,
           },
           data: {
             label: getNodeLabel(leaf),

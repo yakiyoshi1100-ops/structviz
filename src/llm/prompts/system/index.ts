@@ -4,6 +4,15 @@ import { FRAMEWORK_REGISTRY, FrameworkType } from '@/types'
 const schemaText = JSON.stringify(RESPONSE_SCHEMA, null, 2)
 
 const frameworkInstructions: Partial<Record<FrameworkType, string>> = {
+  [FrameworkType.MECE]: [
+    'テキストを「漏れなく・重複なく（MECE）」の観点で構造化してください。',
+    '【重要】カテゴリ（branchノード）は必ず3〜6個以内にまとめること。7個以上になる場合は上位概念でグループ化してカテゴリ数を減らすこと。',
+    'roleの使い方:',
+    '  root   = テーマ全体（入力テキストの主題。1つだけ）',
+    '  branch = 分類カテゴリ（MECEに分けた大分類。3〜6個）',
+    '  leaf   = カテゴリに含まれる具体的な要素・詳細（各branchの配下）',
+    'カテゴリ間で重複がないか・全要素を網羅しているかを確認してから出力すること。',
+  ].join('\n'),
   [FrameworkType.CROSS_SWOT]: [
     'SWOT分析のSO/WO/ST/WT戦略に分類してください。',
     'SO（強み×機会）: 積極的に攻める戦略',
