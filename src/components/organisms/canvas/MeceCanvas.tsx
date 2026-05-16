@@ -32,13 +32,10 @@ interface MeceCanvasProps {
 // ---- レイアウト定数（手動計算、dagreは使わない） -------------------------------
 const ROOT_Y = 0
 const BRANCH_Y = 180
-const LEAF_START_Y = 360
 const BRANCH_GAP = 240 // branch間の中心〜中心の横間隔
 const LEAF_GAP = 100 // leaf間の縦間隔
 const BRANCHES_PER_ROW = 5 // 1行に収めるbranchの最大数
-const BRANCH_ROW_HEIGHT = 200 // branchが折り返す際の行間（branch行間の縦幅）
-// branchのy座標からleafの先頭y座標までの距離（= LEAF_START_Y - BRANCH_Y）
-const LEAF_OFFSET_FROM_BRANCH = LEAF_START_Y - BRANCH_Y // 180
+const BRANCH_ROW_HEIGHT = 200 // branchが折り返す際の行間、かつleafのbaseYオフセット
 
 const NODE_WIDTH: Record<MeceTier, number> = {
   root: 240,
@@ -266,6 +263,9 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
     }
 
     // branches（5列で折り返し）と各leafを親branchの行に応じて縦積み
+    // branchのposition（centerX, y）を保持し、leaf配置時に参照する
+    const branchPositionMap = new Map<string, { x: number; y: number }>()
+
     visibleBranches.forEach((branch, index) => {
       const row = Math.floor(index / BRANCHES_PER_ROW)
       const col = index % BRANCHES_PER_ROW
@@ -278,6 +278,8 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
       const hasChildren = (childrenMap.get(branch.id) ?? []).length > 0
       const collapsed = collapsedIds.has(branch.id)
       const marker = hasChildren ? (collapsed ? '▶ ' : '▼ ') : ''
+
+      branchPositionMap.set(branch.id, { x: centerX, y: branchY })
 
       out.push({
         id: branch.id,
@@ -293,8 +295,13 @@ export function MeceCanvas({ graph, onNodeEdit }: MeceCanvasProps) {
         selectable: true,
       })
 
-      // leafは親branchのy座標に固定オフセットを足した位置から縦積み
-      const leafBaseY = branchY + LEAF_OFFSET_FROM_BRANCH
+      // leafは「親branchのy + BRANCH_ROW_HEIGHT」から縦積み開始。
+      // LEAF_OFFSET_FROM_BRANCH（固定値）ではなく BRANCH_ROW_HEIGHT をオフセットにすることで
+      // 行0のleafが行1のleaf開始y座標と重ならない。
+      // 行0: leafBaseY = BRANCH_Y + BRANCH_ROW_HEIGHT = 380
+      // 行1: leafBaseY = BRANCH_Y + BRANCH_ROW_HEIGHT*2 = 580
+      const parentPos = branchPositionMap.get(branch.id)
+      const leafBaseY = (parentPos?.y ?? BRANCH_Y) + BRANCH_ROW_HEIGHT
       const childIds = (childrenMap.get(branch.id) ?? []).filter((id) => !hiddenIds.has(id))
       childIds.forEach((leafId, leafIndex) => {
         const leaf = leaves.find((node) => node.id === leafId)
