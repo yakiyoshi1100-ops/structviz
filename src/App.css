@@ -2491,3 +2491,42 @@
   font-size: var(--font-size-md);
 }
 
+/* ---------- MECE canvas (横並びカード型) ---------- */
+
+.mece-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.mece-node {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.mece-node--root {
+  background: linear-gradient(135deg, #1e3a8a, #1e40af);
+  color: #fff;
+  font-weight: 700;
+  border-radius: 14px;
+}
+
+.mece-node--branch {
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.mece-node--leaf {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.mece-node[data-selected="true"] {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+

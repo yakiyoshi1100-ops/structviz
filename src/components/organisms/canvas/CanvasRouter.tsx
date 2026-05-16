@@ -1,6 +1,7 @@
 import { FrameworkType, type FrameworkGraph, type NodeRole, type StructuredNode } from '@/types'
 import { MindmapCanvas } from './MindmapCanvas'
 import { MatrixCanvas } from './MatrixCanvas'
+import { MeceCanvas } from './MeceCanvas'
 import { PyramidCanvas } from './PyramidCanvas'
 import { TreeCanvas } from './TreeCanvas'
 
@@ -51,6 +52,10 @@ export function CanvasRouter({
 
   if (graph.frameworkType === FrameworkType.WHY_TREE) {
     return <MindmapCanvas graph={graph} onNodeEdit={onNodeEdit} />
+  }
+
+  if (graph.frameworkType === FrameworkType.MECE) {
+    return <MeceCanvas graph={graph} onNodeEdit={onNodeEdit} />
   }
 
   if (graph.frameworkType === FrameworkType.PYRAMID) {
