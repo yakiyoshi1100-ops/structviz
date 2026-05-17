@@ -57,7 +57,7 @@ export function WorkspacePage() {
   const crossEdges = useCrossLinkStore((s) => s.crossEdges)
   const crossConnectMode = useCrossLinkStore((s) => s.connectMode)
   const addCrossEdge = useCrossLinkStore((s) => s.addCrossEdge)
-  const removeCrossEdge = useCrossLinkStore((s) => s.removeCrossEdge)
+  const toggleCrossEdgeVisibility = useCrossLinkStore((s) => s.toggleCrossEdgeVisibility)
 
   useShortcuts({ onStructurize })
 
@@ -168,7 +168,7 @@ export function WorkspacePage() {
               crossEdges={crossEdges}
               connectMode={crossConnectMode}
               onAddCrossEdge={addCrossEdge}
-              onRemoveCrossEdge={removeCrossEdge}
+              onToggleCrossEdge={toggleCrossEdgeVisibility}
             />
           </div>
         </div>

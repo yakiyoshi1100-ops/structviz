@@ -15,7 +15,8 @@ export interface CrossEdgeData {
   id: string
   sourceNodeId: string
   targetNodeId: string
-  reason?: string  // AI提案時の関連理由
+  reason?: string   // AI提案時の関連理由
+  hidden?: boolean  // 非表示フラグ（削除せず一時的に隠す）
 }
 
 const MAX_SLOTS = 3
@@ -51,6 +52,7 @@ export interface CrossLinkStore {
   addCrossEdge: (edge: CrossEdgeData) => void
   addCrossEdges: (edges: CrossEdgeData[]) => void
   removeCrossEdge: (edgeId: string) => void
+  toggleCrossEdgeVisibility: (edgeId: string) => void
   clearCrossEdges: () => void
   setConnectMode: (v: boolean) => void
   isSuggesting: boolean
@@ -120,6 +122,14 @@ export const useCrossLinkStore = create<CrossLinkStore>((set, get) => ({
 
   removeCrossEdge: (edgeId) => {
     set((state) => ({ crossEdges: state.crossEdges.filter((e) => e.id !== edgeId) }))
+  },
+
+  toggleCrossEdgeVisibility: (edgeId) => {
+    set((state) => ({
+      crossEdges: state.crossEdges.map((e) =>
+        e.id === edgeId ? { ...e, hidden: !e.hidden } : e,
+      ),
+    }))
   },
 
   clearCrossEdges: () => set({ crossEdges: [] }),

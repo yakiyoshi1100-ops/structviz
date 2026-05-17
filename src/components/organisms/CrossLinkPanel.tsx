@@ -20,6 +20,7 @@ export function CrossLinkPanel() {
   const setSlotFramework = useCrossLinkStore((s) => s.setSlotFramework)
   const setConnectMode = useCrossLinkStore((s) => s.setConnectMode)
   const removeCrossEdge = useCrossLinkStore((s) => s.removeCrossEdge)
+  const toggleCrossEdgeVisibility = useCrossLinkStore((s) => s.toggleCrossEdgeVisibility)
   const clearCrossEdges = useCrossLinkStore((s) => s.clearCrossEdges)
   const suggestResult = useCrossLinkStore((s) => s.suggestResult)
   const setSuggestResult = useCrossLinkStore((s) => s.setSuggestResult)
@@ -181,25 +182,42 @@ export function CrossLinkPanel() {
         {/* クロスエッジ一覧 */}
         {crossEdges.length > 0 && (
           <div className="crosslink-edge-list">
-            <span className="crosslink-edge-list__label">リンク ({crossEdges.length})</span>
+            <span className="crosslink-edge-list__label">
+              リンク ({crossEdges.filter((e) => !e.hidden).length}/{crossEdges.length})
+            </span>
             <button
               type="button"
               className="crosslink-clear-btn"
               onClick={clearCrossEdges}
-              title="全リンクを削除"
+              title="全リンクを完全削除"
             >
               全削除
             </button>
             {crossEdges.map((ce) => (
-              <button
+              <div
                 key={ce.id}
-                type="button"
-                className="crosslink-edge-chip"
-                title={ce.reason ?? 'クリックで削除'}
-                onClick={() => removeCrossEdge(ce.id)}
+                className={`crosslink-edge-chip${ce.hidden ? ' crosslink-edge-chip--hidden' : ''}`}
               >
-                {ce.reason ? `${ce.reason} ✕` : '✕'}
-              </button>
+                {/* クリックで表示/非表示トグル */}
+                <button
+                  type="button"
+                  className="crosslink-edge-chip__label"
+                  title={ce.hidden ? 'クリックで表示' : 'クリックで非表示'}
+                  onClick={() => toggleCrossEdgeVisibility(ce.id)}
+                >
+                  <span className="crosslink-edge-chip__eye">{ce.hidden ? '🙈' : '👁'}</span>
+                  {ce.reason ?? '接続'}
+                </button>
+                {/* 完全削除ボタン */}
+                <button
+                  type="button"
+                  className="crosslink-edge-chip__del"
+                  title="このリンクを削除"
+                  onClick={() => removeCrossEdge(ce.id)}
+                >
+                  ✕
+                </button>
+              </div>
             ))}
           </div>
         )}

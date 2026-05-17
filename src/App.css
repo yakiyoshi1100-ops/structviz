@@ -2748,19 +2748,59 @@
   color: #94a3b8;
 }
 
+/* クロスエッジチップ（表示/非表示トグル ＋ 削除ボタン） */
 .crosslink-edge-chip {
+  display: inline-flex;
+  align-items: center;
   background: #78350f;
-  color: #fbbf24;
-  border: none;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 11px;
-  cursor: pointer;
+  border-radius: 5px;
+  overflow: hidden;
+  transition: opacity 0.15s;
 }
 
-.crosslink-edge-chip:hover {
+.crosslink-edge-chip--hidden {
+  opacity: 0.42;
+}
+
+.crosslink-edge-chip__label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: #fbbf24;
+  padding: 3px 6px 3px 5px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.crosslink-edge-chip__label:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.crosslink-edge-chip__eye {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.crosslink-edge-chip__del {
+  background: none;
+  border: none;
+  border-left: 1px solid rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+  padding: 3px 5px;
+  font-size: 10px;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.crosslink-edge-chip__del:hover {
   background: #ef4444;
   color: #fff;
+  opacity: 1;
+  border-left-color: transparent;
 }
 
 /* AIクロスリンク提案ボタン */
@@ -2856,20 +2896,43 @@
   opacity: 1;
 }
 
-/* 接続モード時：ハンドルを可視化 */
+/* ── エッジ選択/ホバー時の強調表示 ──────────────────────────────────────── */
+
+/* ホバー時：オレンジ・太線 */
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: #fb923c !important;
+  stroke-width: 4px !important;
+  cursor: pointer;
+}
+
+/* 選択時：赤・さらに太線・発光エフェクト */
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #ef4444 !important;
+  stroke-width: 5px !important;
+  filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.7)) !important;
+}
+
+/* スロット内エッジ（smoothstep）のデフォルト：少し明るめのグレー */
+.react-flow__edge-path {
+  transition: stroke 0.15s, stroke-width 0.15s;
+}
+
+/* ── 接続モード時：ハンドルを可視化 ──────────────────────────────────────── */
 .crosslink-connect-active .react-flow__handle {
   opacity: 1 !important;
-  width: 10px !important;
-  height: 10px !important;
+  width: 12px !important;
+  height: 12px !important;
   background: #f59e0b !important;
   border: 2px solid #fff !important;
   border-radius: 50% !important;
   cursor: crosshair !important;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6) !important;
 }
 
 .crosslink-connect-active .react-flow__handle:hover {
   background: #ef4444 !important;
-  transform: scale(1.4);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.8) !important;
+  transform: scale(1.5);
   transition: transform 0.1s;
 }
 

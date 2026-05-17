@@ -10,27 +10,37 @@ import {
 import { nanoid } from 'nanoid'
 
 import type { CrossEdgeData, CrossLinkSlot } from '@/stores/crossLinkStore'
+import type { StructuredNode } from '@/types'
 import { FRAMEWORK_REGISTRY } from '@/types'
 import { applyTreeLayout } from './layouts/treeLayout'
 import { TreeNode, type TreeNodeData } from './nodes/TreeNode'
 
-// ── レイアウト定数 ──────────────────────────────────────────────────────────
-// スロットを縦積みすることで、同じ深さのノードが同じX座標に揃い
-// クロスエッジが縦方向（≒平行）になって視覚的な交差が大幅に減少する
-const SLOT_HEIGHT = 1600  // スロット1つ分の縦幅（ツリーがここに収まる）
-const SLOT_GAP   = 400   // スロット間の縦方向ギャップ
-const HEADER_W   = 1400  // スロットヘッダーラベルの横幅
+// ── 定数 ─────────────────────────────────────────────────────────────────────
+// NODE_H は treeLayout.ts の NODE_HEIGHT と同値（90px）
+const NODE_H      = 90
+const SLOT_PAD    = 55   // ヘッダーからツリー上端までの余白
+const SLOT_GAP    = 350  // スロット間の縦方向ギャップ（ノード重なり防止）
+const HEADER_W    = 1400 // スロットヘッダーラベルの横幅
 
 // TODO (item 4): ピラミッド・カード型フレームワークのネイティブレンダリング対応
-// 現在はすべてのフレームワークをTreeNode（LRツリー）で表示
+// 現在はすべてのフレームワークを TreeNode（LRツリー）で表示
 // 将来的には frameworkType に応じてノードタイプを切り替える
 
 const nodeTypes = { treeNode: TreeNode }
 
 const crossEdgeStyle = {
   stroke: '#f59e0b',
-  strokeWidth: 2,
+  strokeWidth: 2.5,
   strokeDasharray: '8 4',
+}
+
+// ── 型定義 ───────────────────────────────────────────────────────────────────
+interface SlotLayout {
+  laidOut: StructuredNode[] | null
+  yHeader: number   // ヘッダーノードのY座標
+  yStart:  number   // ツリー最上端のY座標
+  yEnd:    number   // ツリー最下端（NODE_H込み）のY座標
+  minNodeY: number  // laidOut中の最小Y（シフト量計算用）
 }
 
 interface CrossLinkCanvasProps {
@@ -38,7 +48,8 @@ interface CrossLinkCanvasProps {
   crossEdges: CrossEdgeData[]
   connectMode: boolean
   onAddCrossEdge: (edge: CrossEdgeData) => void
-  onRemoveCrossEdge: (edgeId: string) => void
+  /** クリック時に表示/非表示をトグル（削除しない） */
+  onToggleCrossEdge: (edgeId: string) => void
 }
 
 export function CrossLinkCanvas({
@@ -46,26 +57,74 @@ export function CrossLinkCanvas({
   crossEdges,
   connectMode,
   onAddCrossEdge,
-  onRemoveCrossEdge,
+  onToggleCrossEdge,
 }: CrossLinkCanvasProps) {
+
+  // ── 各スロットのレイアウト計算（動的yオフセット）─────────────────────────
+  // ツリーの実際の高さに基づいてyOffsetを決定するため
+  // スロット間のノード重なりを防ぐ
+  const slotLayouts = useMemo<SlotLayout[]>(() => {
+    const result: SlotLayout[] = []
+    let cursor = 0  // 次のスロット開始Y（累積）
+
+    slots.forEach((slot) => {
+      // グラフ未生成 → プレースホルダー用の最小高さ
+      if (!slot.graph || slot.graph.nodes.length === 0) {
+        const phH = 90
+        result.push({
+          laidOut:  null,
+          yHeader:  cursor,
+          yStart:   cursor + SLOT_PAD,
+          yEnd:     cursor + SLOT_PAD + phH,
+          minNodeY: 0,
+        })
+        cursor += SLOT_PAD + phH + SLOT_GAP
+        return
+      }
+
+      const laidOut = applyTreeLayout(slot.graph.nodes, slot.graph.edges, 'LR')
+
+      if (laidOut.length === 0) {
+        result.push({ laidOut: [], yHeader: cursor, yStart: cursor + SLOT_PAD, yEnd: cursor + SLOT_PAD, minNodeY: 0 })
+        cursor += SLOT_PAD + SLOT_GAP
+        return
+      }
+
+      // 実際のツリー高さを計測
+      const yVals   = laidOut.map((n) => n.position.y)
+      const minNodeY = Math.min(...yVals)
+      const maxNodeY = Math.max(...yVals)
+      const treeH   = maxNodeY - minNodeY + NODE_H  // 最下端ノードの底面まで
+
+      const yStart = cursor + SLOT_PAD
+      const yEnd   = yStart + treeH
+
+      result.push({ laidOut, yHeader: cursor, yStart, yEnd, minNodeY })
+      cursor = yEnd + SLOT_GAP
+    })
+
+    return result
+  }, [slots])
+
   // ── ノード生成 ────────────────────────────────────────────────────────────
   const flowNodes = useMemo<Node[]>(() => {
     const out: Node[] = []
 
-    slots.forEach((slot, slotIndex) => {
-      // スロットごとの縦オフセット（スロット0が最上部）
-      const yOffset = slotIndex * (SLOT_HEIGHT + SLOT_GAP)
+    slots.forEach((slot, i) => {
+      const layout = slotLayouts[i]
+      if (!layout) return
 
       if (!slot.graph || slot.graph.nodes.length === 0) {
-        // プレースホルダーノード（ツリー未生成時）
         out.push({
           id: `placeholder_${slot.id}`,
           type: 'default',
-          position: { x: 240, y: yOffset - 45 },
+          position: { x: 240, y: layout.yStart },
           draggable: false,
           selectable: false,
           data: {
-            label: slot.frameworkType ? '「全スロット展開」でグラフを生成' : 'フレームワークを選択',
+            label: slot.frameworkType
+              ? '「全スロット展開」でグラフを生成'
+              : 'フレームワークを選択',
           },
           style: {
             background: 'transparent',
@@ -81,37 +140,32 @@ export function CrossLinkCanvas({
         return
       }
 
-      // LR ツリーレイアウトを適用 → Y方向はツリー固有（中心=0）→ yOffset を加算
-      // セパレータに @@（nanoidは @ を使わないため衝突しない）
-      const laidOut = applyTreeLayout(slot.graph.nodes, slot.graph.edges, 'LR')
+      const { laidOut, yStart, minNodeY } = layout
+      if (!laidOut) return
 
       laidOut.forEach((node) => {
-        const nodeId = `${slot.id}@@${node.id}`
         out.push({
-          id: nodeId,
+          id: `${slot.id}@@${node.id}`,
           type: 'treeNode',
           position: {
-            x: node.position.x,          // 深さ方向（右へ伸びる）
-            y: node.position.y + yOffset, // 縦積みオフセットを加算
+            x: node.position.x,
+            y: node.position.y - minNodeY + yStart, // ツリーをyStartから始まるようシフト
           },
           draggable: false,
           connectable: connectMode,
-          data: {
-            node,
-            onEdit: () => {},
-          } satisfies TreeNodeData,
+          data: { node, onEdit: () => {} } satisfies TreeNodeData,
         })
       })
     })
 
     return out
-  }, [slots, connectMode])
+  }, [slots, connectMode, slotLayouts])
 
   // ── エッジ生成 ────────────────────────────────────────────────────────────
   const flowEdges = useMemo<Edge[]>(() => {
     const out: Edge[] = []
 
-    // スロット内エッジ（同じ深さ間の親→子）
+    // スロット内エッジ（親→子、LR smoothstep）
     slots.forEach((slot) => {
       if (!slot.graph) return
       slot.graph.edges.forEach((edge) => {
@@ -125,21 +179,21 @@ export function CrossLinkCanvas({
       })
     })
 
-    // クロスエッジ（黄色破線）
-    // 縦積みレイアウトにより同深度ノードが同X座標に揃うため
-    // クロスエッジは縦方向（≒平行）になり交差が少ない
-    crossEdges.forEach((ce) => {
-      out.push({
-        id: ce.id,
-        source: ce.sourceNodeId,
-        target: ce.targetNodeId,
-        type: 'straight',
-        style: crossEdgeStyle,
-        label: ce.reason ?? '関連',
-        labelStyle: { fontSize: 10, fill: '#f59e0b', fontWeight: 600 },
-        labelBgStyle: { fill: '#1e293b', fillOpacity: 0.85 },
+    // クロスエッジ：hidden=true のものは描画しない
+    crossEdges
+      .filter((ce) => !ce.hidden)
+      .forEach((ce) => {
+        out.push({
+          id: ce.id,
+          source: ce.sourceNodeId,
+          target: ce.targetNodeId,
+          type: 'straight',
+          style: crossEdgeStyle,
+          label: ce.reason ?? '関連',
+          labelStyle: { fontSize: 10, fill: '#f59e0b', fontWeight: 600 },
+          labelBgStyle: { fill: '#1e293b', fillOpacity: 0.85 },
+        })
       })
-    })
 
     return out
   }, [slots, crossEdges])
@@ -150,8 +204,7 @@ export function CrossLinkCanvas({
       if (!connection.source || !connection.target) return
       const srcSlotId = connection.source.split('@@')[0]
       const tgtSlotId = connection.target.split('@@')[0]
-      // 同スロット内接続は無視
-      if (srcSlotId === tgtSlotId) return
+      if (srcSlotId === tgtSlotId) return  // 同スロット内の接続は無視
       onAddCrossEdge({
         id: nanoid(),
         sourceNodeId: connection.source,
@@ -161,27 +214,29 @@ export function CrossLinkCanvas({
     [onAddCrossEdge],
   )
 
+  // クロスエッジをクリック → 表示/非表示トグル（削除しない）
   const handleEdgeClick = useCallback(
     (_event: React.MouseEvent, edge: Edge) => {
       if (crossEdges.some((ce) => ce.id === edge.id)) {
-        onRemoveCrossEdge(edge.id)
+        onToggleCrossEdge(edge.id)
       }
     },
-    [crossEdges, onRemoveCrossEdge],
+    [crossEdges, onToggleCrossEdge],
   )
 
-  // ── スロットヘッダーラベル（各スロットの左上） ────────────────────────────
-  const headerNodes = useMemo<Node[]>(() =>
-    slots.map((slot, i) => {
-      const yOffset = i * (SLOT_HEIGHT + SLOT_GAP)
+  // ── スロットヘッダーラベル ────────────────────────────────────────────────
+  const headerNodes = useMemo<Node[]>(() => {
+    const nodes: Node[] = []
+    slots.forEach((slot, i) => {
+      const layout = slotLayouts[i]
+      if (!layout) return
       const label = slot.frameworkType
         ? `${FRAMEWORK_REGISTRY[slot.frameworkType].icon} ${FRAMEWORK_REGISTRY[slot.frameworkType].label}`
         : `スロット ${i + 1}`
-      return {
+      nodes.push({
         id: `header_${slot.id}`,
         type: 'default',
-        // ツリーの上端（SLOT_HEIGHT/2 + マージン）に配置
-        position: { x: -20, y: yOffset - SLOT_HEIGHT / 2 - 60 },
+        position: { x: -20, y: layout.yHeader },
         draggable: false,
         selectable: false,
         data: { label },
@@ -197,9 +252,10 @@ export function CrossLinkCanvas({
           textAlign: 'center',
           pointerEvents: 'none',
         },
-      }
-    }),
-  [slots])
+      })
+    })
+    return nodes
+  }, [slots, slotLayouts])
 
   return (
     <div
