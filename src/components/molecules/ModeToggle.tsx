@@ -24,6 +24,13 @@ export function ModeToggle({ mode, onChange, aiReady }: ModeToggleProps) {
       >
         presentation
       </button>
+      <button
+        type="button"
+        className={mode === 'crosslink' ? 'active' : ''}
+        onClick={() => onChange('crosslink')}
+      >
+        🔗 crosslink
+      </button>
       <Badge label={aiReady ? 'AI ready' : 'standalone'} color={aiReady ? 'green' : 'gray'} />
     </div>
   )

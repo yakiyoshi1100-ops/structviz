@@ -8,7 +8,7 @@ export interface AppConfig {
   apiKey: string | null
   model: 'claude-sonnet-4-6'
   lastSelectedFramework: FrameworkType | null
-  viewMode: 'facilitator' | 'presentation'
+  viewMode: 'facilitator' | 'presentation' | 'crosslink'
   whisperMode: WhisperMode
   openAiApiKey: string | null
   localWhisperUrl: string | null
