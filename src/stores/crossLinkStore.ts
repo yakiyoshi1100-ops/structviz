@@ -40,6 +40,8 @@ export interface CrossLinkStore {
   slots: CrossLinkSlot[]
   crossEdges: CrossEdgeData[]
   connectMode: boolean
+  sharedInput: string
+  setSharedInput: (text: string) => void
   addSlot: () => void
   removeSlot: (slotId: string) => void
   setSlotFramework: (slotId: string, fw: FrameworkType) => void
@@ -62,8 +64,11 @@ export const useCrossLinkStore = create<CrossLinkStore>((set, get) => ({
   slots: [makeSlot(), makeSlot()],
   crossEdges: [],
   connectMode: false,
+  sharedInput: '',
   isSuggesting: false,
   suggestResult: null,
+
+  setSharedInput: (sharedInput) => set({ sharedInput }),
 
   addSlot: () => {
     if (get().slots.length >= MAX_SLOTS) return
@@ -130,6 +135,7 @@ export const useCrossLinkStore = create<CrossLinkStore>((set, get) => ({
       slots: [makeSlot(), makeSlot()],
       crossEdges: [],
       connectMode: false,
+      sharedInput: '',
       isSuggesting: false,
       suggestResult: null,
     }),

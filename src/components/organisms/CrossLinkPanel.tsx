@@ -3,40 +3,87 @@ import { useCrossLinkClassify } from '@/hooks/useCrossLinkClassify'
 import { useConfigStore, useCrossLinkStore } from '@/stores'
 import { FRAMEWORK_REGISTRY, FrameworkType } from '@/types'
 
-// フレームワーク選択肢をカテゴリ順に並べる
+// フレームワーク選択肢
 const FRAMEWORK_OPTIONS = Object.values(FrameworkType).map((fw) => ({
   value: fw,
   label: `${FRAMEWORK_REGISTRY[fw].icon} ${FRAMEWORK_REGISTRY[fw].label}`,
-  category: FRAMEWORK_REGISTRY[fw].category,
 }))
 
 export function CrossLinkPanel() {
   const slots = useCrossLinkStore((s) => s.slots)
   const crossEdges = useCrossLinkStore((s) => s.crossEdges)
   const connectMode = useCrossLinkStore((s) => s.connectMode)
+  const sharedInput = useCrossLinkStore((s) => s.sharedInput)
+  const setSharedInput = useCrossLinkStore((s) => s.setSharedInput)
   const addSlot = useCrossLinkStore((s) => s.addSlot)
   const removeSlot = useCrossLinkStore((s) => s.removeSlot)
   const setSlotFramework = useCrossLinkStore((s) => s.setSlotFramework)
-  const setSlotInput = useCrossLinkStore((s) => s.setSlotInput)
   const setConnectMode = useCrossLinkStore((s) => s.setConnectMode)
   const removeCrossEdge = useCrossLinkStore((s) => s.removeCrossEdge)
   const clearCrossEdges = useCrossLinkStore((s) => s.clearCrossEdges)
   const suggestResult = useCrossLinkStore((s) => s.suggestResult)
   const setSuggestResult = useCrossLinkStore((s) => s.setSuggestResult)
+
   const { classifySlot } = useCrossLinkClassify()
   const { suggestCrossLinks, isSuggesting } = useAICrossLink()
   const isAiMode = useConfigStore((s) => s.mode === 'ai' && Boolean(s.apiKey))
+
+  const isAnyLoading = slots.some((s) => s.isLoading)
   const activeSlotCount = slots.filter((s) => s.graph && s.graph.nodes.length > 0).length
+  const canExpand = sharedInput.trim() !== '' && slots.some((s) => s.frameworkType !== null)
+
+  // 全スロットを共通テキストで一括展開
+  const expandAll = () => {
+    const text = sharedInput.trim()
+    if (!text) return
+    for (const slot of slots) {
+      if (slot.frameworkType) {
+        void classifySlot(slot.id, text, slot.frameworkType)
+      }
+    }
+  }
 
   return (
     <div className="crosslink-panel">
-      {/* スロット一覧 */}
+      {/* ── 入力エリア ── */}
+      <div className="crosslink-input-area">
+        <textarea
+          className="crosslink-shared-textarea"
+          placeholder="分析するテキストを入力（Ctrl+Enter で全スロット展開）..."
+          value={sharedInput}
+          rows={3}
+          onChange={(e) => setSharedInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              if (canExpand && !isAnyLoading) expandAll()
+            }
+          }}
+        />
+        <button
+          type="button"
+          className="crosslink-expand-btn"
+          disabled={!canExpand || isAnyLoading}
+          onClick={expandAll}
+          title="フレームワークが選択されているスロットを一括展開"
+        >
+          {isAnyLoading ? '処理中...' : '▶ 全スロット展開'}
+        </button>
+      </div>
+
+      {/* ── フレームワーク選択行 ── */}
       <div className="crosslink-slots">
         {slots.map((slot, index) => (
           <div key={slot.id} className="crosslink-slot">
-            {/* スロットヘッダー */}
             <div className="crosslink-slot__head">
               <span className="crosslink-slot__num">スロット {index + 1}</span>
+              <div className="crosslink-slot__indicators">
+                {slot.isLoading && <span className="crosslink-slot__spinner">⟳</span>}
+                {!slot.isLoading && slot.graph && (
+                  <span className="crosslink-slot__done" title={`${slot.graph.nodes.length}ノード`}>
+                    ✓
+                  </span>
+                )}
+              </div>
               {slots.length > 2 && (
                 <button
                   type="button"
@@ -48,8 +95,6 @@ export function CrossLinkPanel() {
                 </button>
               )}
             </div>
-
-            {/* フレームワーク選択 */}
             <select
               className="crosslink-slot__select"
               value={slot.frameworkType ?? ''}
@@ -66,57 +111,31 @@ export function CrossLinkPanel() {
                 </option>
               ))}
             </select>
-
-            {/* テキスト入力 */}
-            <textarea
-              className="crosslink-slot__textarea"
-              placeholder="分析するテキストを入力..."
-              value={slot.inputText}
-              rows={3}
-              onChange={(e) => setSlotInput(slot.id, e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                  if (slot.frameworkType && slot.inputText.trim()) {
-                    void classifySlot(slot.id, slot.inputText, slot.frameworkType)
-                  }
-                }
-              }}
-            />
-
-            {/* 展開ボタン */}
-            <button
-              type="button"
-              className="crosslink-slot__btn"
-              disabled={!slot.frameworkType || !slot.inputText.trim() || slot.isLoading}
-              onClick={() => {
-                if (slot.frameworkType && slot.inputText.trim()) {
-                  void classifySlot(slot.id, slot.inputText, slot.frameworkType)
-                }
-              }}
-            >
-              {slot.isLoading ? '処理中...' : '▶ 展開する'}
-            </button>
           </div>
         ))}
 
         {/* スロット追加ボタン */}
         {slots.length < 3 && (
           <button type="button" className="crosslink-add-slot" onClick={addSlot}>
-            ＋ スロット追加
+            ＋
           </button>
         )}
       </div>
 
-      {/* ツールバー */}
+      {/* ── ツールバー ── */}
       <div className="crosslink-toolbar">
-        {/* AIクロスリンク提案ボタン（メイン機能） */}
+        {/* AIクロスリンク提案ボタン */}
         {isAiMode && (
           <button
             type="button"
             className={`crosslink-ai-suggest${isSuggesting ? ' loading' : ''}`}
             disabled={isSuggesting || activeSlotCount < 2}
             onClick={() => void suggestCrossLinks()}
-            title={activeSlotCount < 2 ? '2スロット以上グラフを展開してください' : 'AIが関連ノードを自動でクロスリンク'}
+            title={
+              activeSlotCount < 2
+                ? '2スロット以上グラフを展開してください'
+                : 'AIが関連ノードを自動でクロスリンク'
+            }
           >
             {isSuggesting ? '🤖 AI分析中...' : '🤖 AIクロスリンク提案'}
           </button>
@@ -135,14 +154,14 @@ export function CrossLinkPanel() {
         </label>
 
         {connectMode && (
-          <p className="crosslink-connect-hint">
-            別スロットのノード端（●）からドラッグして接続
-          </p>
+          <p className="crosslink-connect-hint">ノード端（●）からドラッグして別スロットへ接続</p>
         )}
 
         {/* AI提案結果メッセージ */}
         {suggestResult && !isSuggesting && (
-          <div className={`crosslink-suggest-result crosslink-suggest-result--${suggestResult.type}`}>
+          <div
+            className={`crosslink-suggest-result crosslink-suggest-result--${suggestResult.type}`}
+          >
             <span>
               {suggestResult.type === 'success' && '✅ '}
               {suggestResult.type === 'empty' && '⚠️ '}
