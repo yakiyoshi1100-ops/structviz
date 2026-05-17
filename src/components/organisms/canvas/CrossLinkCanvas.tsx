@@ -111,7 +111,7 @@ export function CrossLinkCanvas({
       })
     })
 
-    // クロスエッジ（黄色破線）
+    // クロスエッジ（黄色破線）。AI提案はreasonをラベルに表示
     crossEdges.forEach((ce) => {
       out.push({
         id: ce.id,
@@ -119,8 +119,9 @@ export function CrossLinkCanvas({
         target: ce.targetNodeId,
         type: 'straight',
         style: crossEdgeStyle,
-        label: '関連',
-        labelStyle: { fontSize: 11, fill: '#f59e0b' },
+        label: ce.reason ?? '関連',
+        labelStyle: { fontSize: 10, fill: '#f59e0b', fontWeight: 600 },
+        labelBgStyle: { fill: '#1e293b', fillOpacity: 0.85 },
       })
     })
 

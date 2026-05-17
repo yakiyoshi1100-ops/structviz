@@ -15,6 +15,7 @@ export interface CrossEdgeData {
   id: string
   sourceNodeId: string
   targetNodeId: string
+  reason?: string  // AI提案時の関連理由
 }
 
 const MAX_SLOTS = 3
@@ -40,8 +41,12 @@ export interface CrossLinkStore {
   setSlotGraph: (slotId: string, graph: FrameworkGraph | null) => void
   setSlotLoading: (slotId: string, loading: boolean) => void
   addCrossEdge: (edge: CrossEdgeData) => void
+  addCrossEdges: (edges: CrossEdgeData[]) => void
   removeCrossEdge: (edgeId: string) => void
+  clearCrossEdges: () => void
   setConnectMode: (v: boolean) => void
+  isSuggesting: boolean
+  setSuggesting: (v: boolean) => void
   reset: () => void
 }
 
@@ -49,6 +54,7 @@ export const useCrossLinkStore = create<CrossLinkStore>((set, get) => ({
   slots: [makeSlot(), makeSlot()],
   crossEdges: [],
   connectMode: false,
+  isSuggesting: false,
 
   addSlot: () => {
     if (get().slots.length >= MAX_SLOTS) return
@@ -94,16 +100,25 @@ export const useCrossLinkStore = create<CrossLinkStore>((set, get) => ({
     set((state) => ({ crossEdges: [...state.crossEdges, edge] }))
   },
 
+  addCrossEdges: (edges) => {
+    set((state) => ({ crossEdges: [...state.crossEdges, ...edges] }))
+  },
+
   removeCrossEdge: (edgeId) => {
     set((state) => ({ crossEdges: state.crossEdges.filter((e) => e.id !== edgeId) }))
   },
 
+  clearCrossEdges: () => set({ crossEdges: [] }),
+
   setConnectMode: (connectMode) => set({ connectMode }),
+
+  setSuggesting: (isSuggesting) => set({ isSuggesting }),
 
   reset: () =>
     set({
       slots: [makeSlot(), makeSlot()],
       crossEdges: [],
       connectMode: false,
+      isSuggesting: false,
     }),
 }))
