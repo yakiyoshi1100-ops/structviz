@@ -20,6 +20,7 @@ const matrixFrameworks = new Set<FrameworkType>([
   FrameworkType.CROSS_SWOT,
   FrameworkType.PRIORITY_MATRIX,
   FrameworkType.AS_IS_TO_BE,
+  FrameworkType.PHENOMENON_TO_ACTION,
   FrameworkType.BUSINESS_FLOW,
   FrameworkType.ECRS,
   FrameworkType.FOUR_M,

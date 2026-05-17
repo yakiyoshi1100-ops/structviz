@@ -147,7 +147,7 @@ export const FRAMEWORK_REGISTRY: Record<FrameworkType, FrameworkDefinition> = {
     description: '大前提→小前提→結論で論理を展開する',
     category: '論理展開',
     visualization: 'tree',
-    nodeRoles: ['major-premise', 'minor-premise', 'conclusion'],
+    nodeRoles: ['major_premise', 'minor_premise', 'conclusion'],
   },
   [FrameworkType.INDUCTION]: {
     type: FrameworkType.INDUCTION,

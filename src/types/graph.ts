@@ -37,8 +37,6 @@ export type NodeRole =
   | 'market-development'
   | 'product-development'
   | 'diversification'
-  | 'major-premise'
-  | 'minor-premise'
   | 'major_premise'
   | 'minor_premise'
   | 'observation'
