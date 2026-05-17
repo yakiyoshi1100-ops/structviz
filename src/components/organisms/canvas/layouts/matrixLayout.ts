@@ -120,6 +120,14 @@ export function getMatrixConfig(framework: FrameworkType): MatrixConfig {
         ['to_be', 'To-Be\n理想', c.green],
         ['action', 'Action\n打ち手', c.blue],
       ])
+    case FrameworkType.PHENOMENON_TO_ACTION:
+      return oneRow([
+        ['phenomenon', '現象\n表面の困りごと', c.slate],
+        ['problem', '問題\n本質的な問題', c.red],
+        ['cause', '原因\n問題の要因', c.orange],
+        ['issue', '課題\n解決すべきテーマ', c.blue],
+        ['measure', '施策\n具体的な打ち手', c.green],
+      ])
     case FrameworkType.BUSINESS_FLOW:
       return oneRow([
         ['flow_input', '入力\n受付・依頼', c.purple],
