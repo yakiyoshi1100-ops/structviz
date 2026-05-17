@@ -30,6 +30,12 @@ function makeSlot(): CrossLinkSlot {
   }
 }
 
+export interface SuggestResult {
+  count: number
+  type: 'success' | 'empty' | 'error'
+  message: string
+}
+
 export interface CrossLinkStore {
   slots: CrossLinkSlot[]
   crossEdges: CrossEdgeData[]
@@ -47,6 +53,8 @@ export interface CrossLinkStore {
   setConnectMode: (v: boolean) => void
   isSuggesting: boolean
   setSuggesting: (v: boolean) => void
+  suggestResult: SuggestResult | null
+  setSuggestResult: (result: SuggestResult | null) => void
   reset: () => void
 }
 
@@ -55,6 +63,7 @@ export const useCrossLinkStore = create<CrossLinkStore>((set, get) => ({
   crossEdges: [],
   connectMode: false,
   isSuggesting: false,
+  suggestResult: null,
 
   addSlot: () => {
     if (get().slots.length >= MAX_SLOTS) return
@@ -114,11 +123,14 @@ export const useCrossLinkStore = create<CrossLinkStore>((set, get) => ({
 
   setSuggesting: (isSuggesting) => set({ isSuggesting }),
 
+  setSuggestResult: (suggestResult) => set({ suggestResult }),
+
   reset: () =>
     set({
       slots: [makeSlot(), makeSlot()],
       crossEdges: [],
       connectMode: false,
       isSuggesting: false,
+      suggestResult: null,
     }),
 }))

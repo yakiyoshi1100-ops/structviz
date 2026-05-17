@@ -2776,6 +2776,50 @@
   border-color: #ef4444;
 }
 
+/* AI提案結果メッセージ */
+.crosslink-suggest-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.crosslink-suggest-result--success {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid #10b981;
+  color: #6ee7b7;
+}
+
+.crosslink-suggest-result--empty {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid #f59e0b;
+  color: #fbbf24;
+}
+
+.crosslink-suggest-result--error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+}
+
+.crosslink-suggest-result__close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0.7;
+}
+
+.crosslink-suggest-result__close:hover {
+  opacity: 1;
+}
+
 /* 接続モード時：ハンドルを可視化 */
 .crosslink-connect-active .react-flow__handle {
   opacity: 1 !important;

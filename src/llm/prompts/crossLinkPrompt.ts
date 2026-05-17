@@ -21,16 +21,16 @@ export const CROSS_LINK_SYSTEM_PROMPT = [
   '- reasonは日本語15文字以内で端的に',
   '- 必ずJSON形式のみで返すこと。説明文・マークダウン不要',
   '',
-  '出力スキーマ:',
+  '出力スキーマ（sourceSlot・targetSlotは必ず整数で出力すること）:',
   JSON.stringify(
     {
       crossLinks: [
         {
-          sourceSlot: '<スロット番号 0始まり>',
-          sourceNodeId: '<ノードID（入力で示したIDそのまま）>',
-          targetSlot: '<スロット番号 0始まり>',
-          targetNodeId: '<ノードID（入力で示したIDそのまま）>',
-          reason: '<関連理由 15文字以内>',
+          sourceSlot: 0,
+          sourceNodeId: 'n1',
+          targetSlot: 1,
+          targetNodeId: 'n3',
+          reason: '同じ課題を指す',
         },
       ],
     },

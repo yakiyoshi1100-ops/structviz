@@ -21,6 +21,8 @@ export function CrossLinkPanel() {
   const setConnectMode = useCrossLinkStore((s) => s.setConnectMode)
   const removeCrossEdge = useCrossLinkStore((s) => s.removeCrossEdge)
   const clearCrossEdges = useCrossLinkStore((s) => s.clearCrossEdges)
+  const suggestResult = useCrossLinkStore((s) => s.suggestResult)
+  const setSuggestResult = useCrossLinkStore((s) => s.setSuggestResult)
   const { classifySlot } = useCrossLinkClassify()
   const { suggestCrossLinks, isSuggesting } = useAICrossLink()
   const isAiMode = useConfigStore((s) => s.mode === 'ai' && Boolean(s.apiKey))
@@ -136,6 +138,25 @@ export function CrossLinkPanel() {
           <p className="crosslink-connect-hint">
             別スロットのノード端（●）からドラッグして接続
           </p>
+        )}
+
+        {/* AI提案結果メッセージ */}
+        {suggestResult && !isSuggesting && (
+          <div className={`crosslink-suggest-result crosslink-suggest-result--${suggestResult.type}`}>
+            <span>
+              {suggestResult.type === 'success' && '✅ '}
+              {suggestResult.type === 'empty' && '⚠️ '}
+              {suggestResult.type === 'error' && '❌ '}
+              {suggestResult.message}
+            </span>
+            <button
+              type="button"
+              className="crosslink-suggest-result__close"
+              onClick={() => setSuggestResult(null)}
+            >
+              ×
+            </button>
+          </div>
         )}
 
         {/* クロスエッジ一覧 */}
