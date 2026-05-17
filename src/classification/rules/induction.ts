@@ -6,7 +6,7 @@ export const inductionRules: FrameworkRuleSet = {
   rules: [
     {
       patterns: ['事例', 'ケース', '実例', 'instance', 'の場合', 'によると', '調査の結果', 'Aでは', 'Bでは', 'Cでは'],
-      role: 'instance',
+      role: 'observation',
       weight: 0.9,
     },
     {
@@ -20,5 +20,5 @@ export const inductionRules: FrameworkRuleSet = {
       weight: 1.0,
     },
   ],
-  defaultRole: 'instance',
+  defaultRole: 'observation',
 }
