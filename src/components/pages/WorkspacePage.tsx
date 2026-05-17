@@ -11,6 +11,8 @@ import {
   UnclassifiedBuffer,
 } from '@/components/organisms'
 import { CanvasRouter } from '@/components/organisms/canvas'
+import { CrossLinkCanvas } from '@/components/organisms/canvas/CrossLinkCanvas'
+import { CrossLinkPanel } from '@/components/organisms/CrossLinkPanel'
 import { FacilitatorLayout, PresentationLayout } from '@/components/templates'
 import { useClassification } from '@/hooks/useClassification'
 import { useExport } from '@/hooks/useExport'
@@ -18,6 +20,7 @@ import { useShortcuts } from '@/hooks/useShortcuts'
 import {
   selectIsAiReady,
   selectUnclassified,
+  useCrossLinkStore,
   useConfigStore,
   useSessionStore,
   useUiStore,
@@ -50,6 +53,11 @@ export function WorkspacePage() {
   const toggleSettings = useUiStore((state) => state.toggleSettings)
   const { onStructurize } = useClassification()
   const { onExport } = useExport(canvasRef)
+  const crossSlots = useCrossLinkStore((s) => s.slots)
+  const crossEdges = useCrossLinkStore((s) => s.crossEdges)
+  const crossConnectMode = useCrossLinkStore((s) => s.connectMode)
+  const addCrossEdge = useCrossLinkStore((s) => s.addCrossEdge)
+  const removeCrossEdge = useCrossLinkStore((s) => s.removeCrossEdge)
 
   useShortcuts({ onStructurize })
 
@@ -143,6 +151,27 @@ export function WorkspacePage() {
     return (
       <>
         <PresentationLayout canvas={canvas} floatingInput={floatingInput} />
+        {overlays}
+      </>
+    )
+  }
+
+  if (viewMode === 'crosslink') {
+    return (
+      <>
+        <div className="crosslink-layout">
+          {header}
+          <CrossLinkPanel />
+          <div className="crosslink-canvas-area">
+            <CrossLinkCanvas
+              slots={crossSlots}
+              crossEdges={crossEdges}
+              connectMode={crossConnectMode}
+              onAddCrossEdge={addCrossEdge}
+              onRemoveCrossEdge={removeCrossEdge}
+            />
+          </div>
+        </div>
         {overlays}
       </>
     )
