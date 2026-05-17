@@ -71,10 +71,11 @@ export function CrossLinkCanvas({
       }
 
       // LR tree layoutを適用してXオフセット追加
+      // セパレータに@@を使う（nanoidは@を含まないため衝突しない）
       const laidOut = applyTreeLayout(slot.graph.nodes, slot.graph.edges, 'LR')
 
       laidOut.forEach((node) => {
-        const nodeId = `${slot.id}_${node.id}`
+        const nodeId = `${slot.id}@@${node.id}`
         out.push({
           id: nodeId,
           type: 'treeNode',
@@ -96,14 +97,14 @@ export function CrossLinkCanvas({
   const flowEdges = useMemo<Edge[]>(() => {
     const out: Edge[] = []
 
-    // スロット内エッジ
+    // スロット内エッジ（@@区切り）
     slots.forEach((slot) => {
       if (!slot.graph) return
       slot.graph.edges.forEach((edge) => {
         out.push({
-          id: `${slot.id}_${edge.id}`,
-          source: `${slot.id}_${edge.source}`,
-          target: `${slot.id}_${edge.target}`,
+          id: `${slot.id}@@${edge.id}`,
+          source: `${slot.id}@@${edge.source}`,
+          target: `${slot.id}@@${edge.target}`,
           label: edge.label,
           type: 'smoothstep',
         })
@@ -130,10 +131,11 @@ export function CrossLinkCanvas({
   const handleConnect = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.target) return
+      // @@でスロットIDとノードIDを分離（nanoidは@を含まない）
+      const srcSlotId = connection.source.split('@@')[0]
+      const tgtSlotId = connection.target.split('@@')[0]
       // 同スロット内の接続は無視
-      const srcSlot = connection.source.split('_')[0]
-      const tgtSlot = connection.target.split('_')[0]
-      if (srcSlot === tgtSlot) return
+      if (srcSlotId === tgtSlotId) return
       onAddCrossEdge({
         id: nanoid(),
         sourceNodeId: connection.source,
@@ -183,7 +185,10 @@ export function CrossLinkCanvas({
   [slots])
 
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div
+      style={{ width: '100%', height: '100%' }}
+      className={connectMode ? 'crosslink-connect-active' : ''}
+    >
       <ReactFlow
         nodes={[...headerNodes, ...flowNodes]}
         edges={flowEdges}

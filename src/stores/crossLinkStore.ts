@@ -59,7 +59,7 @@ export const useCrossLinkStore = create<CrossLinkStore>((set, get) => ({
     set((state) => ({
       slots: state.slots.filter((s) => s.id !== slotId),
       crossEdges: state.crossEdges.filter(
-        (e) => !e.sourceNodeId.startsWith(`${slotId}_`) && !e.targetNodeId.startsWith(`${slotId}_`),
+        (e) => !e.sourceNodeId.startsWith(`${slotId}@@`) && !e.targetNodeId.startsWith(`${slotId}@@`),
       ),
     }))
   },
