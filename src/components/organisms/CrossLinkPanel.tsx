@@ -1,5 +1,6 @@
+import { useAICrossLink } from '@/hooks/useAICrossLink'
 import { useCrossLinkClassify } from '@/hooks/useCrossLinkClassify'
-import { useCrossLinkStore } from '@/stores/crossLinkStore'
+import { useConfigStore, useCrossLinkStore } from '@/stores'
 import { FRAMEWORK_REGISTRY, FrameworkType } from '@/types'
 
 // フレームワーク選択肢をカテゴリ順に並べる
@@ -19,7 +20,11 @@ export function CrossLinkPanel() {
   const setSlotInput = useCrossLinkStore((s) => s.setSlotInput)
   const setConnectMode = useCrossLinkStore((s) => s.setConnectMode)
   const removeCrossEdge = useCrossLinkStore((s) => s.removeCrossEdge)
+  const clearCrossEdges = useCrossLinkStore((s) => s.clearCrossEdges)
   const { classifySlot } = useCrossLinkClassify()
+  const { suggestCrossLinks, isSuggesting } = useAICrossLink()
+  const isAiMode = useConfigStore((s) => s.mode === 'ai' && Boolean(s.apiKey))
+  const activeSlotCount = slots.filter((s) => s.graph && s.graph.nodes.length > 0).length
 
   return (
     <div className="crosslink-panel">
@@ -102,6 +107,20 @@ export function CrossLinkPanel() {
 
       {/* ツールバー */}
       <div className="crosslink-toolbar">
+        {/* AIクロスリンク提案ボタン（メイン機能） */}
+        {isAiMode && (
+          <button
+            type="button"
+            className={`crosslink-ai-suggest${isSuggesting ? ' loading' : ''}`}
+            disabled={isSuggesting || activeSlotCount < 2}
+            onClick={() => void suggestCrossLinks()}
+            title={activeSlotCount < 2 ? '2スロット以上グラフを展開してください' : 'AIが関連ノードを自動でクロスリンク'}
+          >
+            {isSuggesting ? '🤖 AI分析中...' : '🤖 AIクロスリンク提案'}
+          </button>
+        )}
+
+        {/* 手動接続モード */}
         <label className="crosslink-connect-toggle">
           <input
             type="checkbox"
@@ -109,28 +128,37 @@ export function CrossLinkPanel() {
             onChange={(e) => setConnectMode(e.target.checked)}
           />
           <span className={`crosslink-connect-badge${connectMode ? ' active' : ''}`}>
-            {connectMode ? '🔗 接続モード ON' : '🔗 接続モード OFF'}
+            {connectMode ? '✋ 手動接続 ON' : '✋ 手動接続'}
           </span>
         </label>
 
         {connectMode && (
           <p className="crosslink-connect-hint">
-            別スロットのノード同士をドラッグして接続 / エッジをクリックで削除
+            別スロットのノード端（●）からドラッグして接続
           </p>
         )}
 
+        {/* クロスエッジ一覧 */}
         {crossEdges.length > 0 && (
           <div className="crosslink-edge-list">
-            <span className="crosslink-edge-list__label">クロスリンク ({crossEdges.length})</span>
+            <span className="crosslink-edge-list__label">リンク ({crossEdges.length})</span>
+            <button
+              type="button"
+              className="crosslink-clear-btn"
+              onClick={clearCrossEdges}
+              title="全リンクを削除"
+            >
+              全削除
+            </button>
             {crossEdges.map((ce) => (
               <button
                 key={ce.id}
                 type="button"
                 className="crosslink-edge-chip"
-                title="クリックで削除"
+                title={ce.reason ?? 'クリックで削除'}
                 onClick={() => removeCrossEdge(ce.id)}
               >
-                ✕
+                {ce.reason ? `${ce.reason} ✕` : '✕'}
               </button>
             ))}
           </div>
