@@ -1,9 +1,23 @@
 import { FrameworkType, type FrameworkGraph, type NodeRole, type StructuredNode } from '@/types'
-import { MindmapCanvas } from './MindmapCanvas'
 import { MatrixCanvas } from './MatrixCanvas'
+import { AsIsToBeCanvas } from './AsIsToBeCanvas'
+import { BusinessFlowCanvas } from './BusinessFlowCanvas'
 import { MeceCanvas } from './MeceCanvas'
 import { PyramidCanvas } from './PyramidCanvas'
 import { TreeCanvas } from './TreeCanvas'
+import { WBSCanvas } from './WBSCanvas'
+import { FishboneCanvas } from './FishboneCanvas'
+import { CustomerJourneyCanvas } from './CustomerJourneyCanvas'
+import { KPICanvas } from './KPICanvas'
+import { PhenomenonToActionCanvas } from './PhenomenonToActionCanvas'
+import { LogicCanvas } from './LogicCanvas'
+import { ThreeCCanvas } from './ThreeCCanvas'
+import { PESTCanvas } from './PESTCanvas'
+import { ZoomPanCanvas } from './ZoomPanCanvas'
+import { RACICanvas } from './RACICanvas'
+import { VSMCanvas } from './VSMCanvas'
+import { BSCCanvas } from './BSCCanvas'
+import { DMAICCanvas } from './DMAICCanvas'
 
 interface CanvasRouterProps {
   graph: FrameworkGraph | null
@@ -12,30 +26,26 @@ interface CanvasRouterProps {
   onDropUnclassified: (nodeId: string, role: NodeRole) => void
 }
 
+// MatrixCanvas が処理するフレームワーク
 const matrixFrameworks = new Set<FrameworkType>([
   FrameworkType.SWOT,
-  FrameworkType.THREE_C,
-  FrameworkType.PEST,
   FrameworkType.ANSOFF,
   FrameworkType.CROSS_SWOT,
   FrameworkType.PRIORITY_MATRIX,
-  FrameworkType.AS_IS_TO_BE,
-  FrameworkType.PHENOMENON_TO_ACTION,
-  FrameworkType.BUSINESS_FLOW,
   FrameworkType.ECRS,
   FrameworkType.FOUR_M,
   FrameworkType.QCD,
   FrameworkType.STP,
   FrameworkType.PPM,
-  FrameworkType.BSC,
   FrameworkType.ABC,
-  FrameworkType.RACI,
   FrameworkType.YWT,
   FrameworkType.SPIN,
-  FrameworkType.CUSTOMER_JOURNEY,
-  FrameworkType.VSM,
-  FrameworkType.DMAIC,
 ])
+
+// 純CSSキャンバスを ZoomPanCanvas でラップするヘルパー
+function withZoom(canvas: React.ReactElement) {
+  return <ZoomPanCanvas>{canvas}</ZoomPanCanvas>
+}
 
 export function CanvasRouter({
   graph,
@@ -51,23 +61,91 @@ export function CanvasRouter({
     )
   }
 
-  if (graph.frameworkType === FrameworkType.WHY_TREE) {
-    return <MindmapCanvas graph={graph} onNodeEdit={onNodeEdit} />
+  // ── 専用キャンバス（ZoomPan ラップ済み） ────────────────────────────────
+  if (graph.frameworkType === FrameworkType.THREE_C) {
+    return withZoom(<ThreeCCanvas graph={graph} onNodeEdit={onNodeEdit} />)
+  }
+
+  if (graph.frameworkType === FrameworkType.PEST) {
+    return withZoom(<PESTCanvas graph={graph} onNodeEdit={onNodeEdit} />)
+  }
+
+  if (graph.frameworkType === FrameworkType.AS_IS_TO_BE) {
+    return withZoom(
+      <AsIsToBeCanvas graph={graph} onNodeEdit={onNodeEdit} onNodeMove={onNodeMove} />
+    )
+  }
+
+  if (graph.frameworkType === FrameworkType.BUSINESS_FLOW) {
+    return withZoom(
+      <BusinessFlowCanvas graph={graph} onNodeEdit={onNodeEdit} onNodeMove={onNodeMove} />
+    )
   }
 
   if (graph.frameworkType === FrameworkType.MECE) {
-    return <MeceCanvas graph={graph} onNodeEdit={onNodeEdit} />
+    return withZoom(<MeceCanvas graph={graph} onNodeEdit={onNodeEdit} />)
   }
 
+  if (graph.frameworkType === FrameworkType.CUSTOMER_JOURNEY) {
+    return withZoom(<CustomerJourneyCanvas graph={graph} />)
+  }
+
+  if (graph.frameworkType === FrameworkType.RACI) {
+    return withZoom(
+      <RACICanvas graph={graph} onNodeEdit={onNodeEdit} onNodeMove={onNodeMove} />
+    )
+  }
+
+  if (graph.frameworkType === FrameworkType.VSM) {
+    return <VSMCanvas graph={graph} onNodeEdit={onNodeEdit} onNodeMove={onNodeMove} />
+  }
+
+  if (graph.frameworkType === FrameworkType.BSC) {
+    return withZoom(<BSCCanvas graph={graph} onNodeEdit={onNodeEdit} onNodeMove={onNodeMove} />)
+  }
+
+  if (graph.frameworkType === FrameworkType.DMAIC) {
+    return withZoom(<DMAICCanvas graph={graph} onNodeEdit={onNodeEdit} />)
+  }
+
+  // ── Pyramid / Tree 系（ZoomPan ラップ済み） ─────────────────────────────
   if (graph.frameworkType === FrameworkType.PYRAMID) {
-    return <PyramidCanvas graph={graph} onNodeEdit={onNodeEdit} />
+    return withZoom(<PyramidCanvas graph={graph} onNodeEdit={onNodeEdit} />)
   }
 
+  // ── ReactFlow 系（自前でズーム・パン・FitView あり） ────────────────────
+  if (graph.frameworkType === FrameworkType.WBS) {
+    return <WBSCanvas graph={graph} onNodeEdit={onNodeEdit} />
+  }
+
+  if (graph.frameworkType === FrameworkType.FISHBONE) {
+    return <FishboneCanvas graph={graph} onNodeEdit={onNodeEdit} />
+  }
+
+  if (graph.frameworkType === FrameworkType.KPI) {
+    return <KPICanvas graph={graph} onNodeEdit={onNodeEdit} />
+  }
+
+  if (graph.frameworkType === FrameworkType.PHENOMENON_TO_ACTION) {
+    return <PhenomenonToActionCanvas graph={graph} onNodeEdit={onNodeEdit} />
+  }
+
+  if (
+    graph.frameworkType === FrameworkType.DEDUCTION ||
+    graph.frameworkType === FrameworkType.INDUCTION
+  ) {
+    return <LogicCanvas graph={graph} onNodeEdit={onNodeEdit} />
+  }
+
+  // ── MatrixCanvas 系（ZoomPan ラップ済み） ────────────────────────────────
   if (matrixFrameworks.has(graph.frameworkType)) {
-    return <MatrixCanvas graph={graph} onNodeMove={onNodeMove} onNodeEdit={onNodeEdit} />
+    return withZoom(
+      <MatrixCanvas graph={graph} onNodeMove={onNodeMove} onNodeEdit={onNodeEdit} />
+    )
   }
 
-  return (
+  // ── TreeCanvas（ZoomPan ラップ済み） ─────────────────────────────────────
+  return withZoom(
     <TreeCanvas
       graph={graph}
       onNodeMove={onNodeMove}
