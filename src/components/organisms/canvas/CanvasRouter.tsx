@@ -19,6 +19,7 @@ import { VSMCanvas } from './VSMCanvas'
 import { BSCCanvas } from './BSCCanvas'
 import { DMAICCanvas } from './DMAICCanvas'
 import { ECRSCanvas } from './ECRSCanvas'
+import { FourMCanvas } from './FourMCanvas'
 
 interface CanvasRouterProps {
   graph: FrameworkGraph | null
@@ -33,7 +34,6 @@ const matrixFrameworks = new Set<FrameworkType>([
   FrameworkType.ANSOFF,
   FrameworkType.CROSS_SWOT,
   FrameworkType.PRIORITY_MATRIX,
-  FrameworkType.FOUR_M,
   FrameworkType.QCD,
   FrameworkType.STP,
   FrameworkType.PPM,
@@ -110,6 +110,10 @@ export function CanvasRouter({
 
   if (graph.frameworkType === FrameworkType.ECRS) {
     return withZoom(<ECRSCanvas graph={graph} onNodeEdit={onNodeEdit} />)
+  }
+
+  if (graph.frameworkType === FrameworkType.FOUR_M) {
+    return withZoom(<FourMCanvas graph={graph} onNodeEdit={onNodeEdit} />)
   }
 
   // ── Pyramid / Tree 系（ZoomPan ラップ済み） ─────────────────────────────
