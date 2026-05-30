@@ -167,7 +167,10 @@ function ItemChip({
           }}
           onChange={(e) => setValue(e.target.value)}
           onBlur={commit}
-          onKeyDown={(e) => { if (e.key === 'Enter') commit() }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit()
+            if (e.key === 'Escape') { setValue(node.label); setEditing(false) }
+          }}
           onMouseDown={(e) => e.stopPropagation()}
         />
       ) : (
@@ -192,7 +195,7 @@ export function DMAICCanvas({ graph, onNodeEdit }: DMAICCanvasProps) {
       m.get(n.role as NodeRole)?.push(n)
     })
     return m
-  }, [graph.nodes])
+  }, [graph])
 
   const total = PHASES.length
 
