@@ -23,6 +23,7 @@ import { FourMCanvas } from './FourMCanvas'
 import { QCDCanvas } from './QCDCanvas'
 import { YWTCanvas } from './YWTCanvas'
 import { SPINCanvas } from './SPINCanvas'
+import { ABCCanvas } from './ABCCanvas'
 
 interface CanvasRouterProps {
   graph: FrameworkGraph | null
@@ -39,7 +40,6 @@ const matrixFrameworks = new Set<FrameworkType>([
   FrameworkType.PRIORITY_MATRIX,
   FrameworkType.STP,
   FrameworkType.PPM,
-  FrameworkType.ABC,
 ])
 
 // 純CSSキャンバスを ZoomPanCanvas でラップするヘルパー
@@ -126,6 +126,10 @@ export function CanvasRouter({
 
   if (graph.frameworkType === FrameworkType.SPIN) {
     return withZoom(<SPINCanvas graph={graph} onNodeEdit={onNodeEdit} />)
+  }
+
+  if (graph.frameworkType === FrameworkType.ABC) {
+    return withZoom(<ABCCanvas graph={graph} onNodeEdit={onNodeEdit} />)
   }
 
   // ── Pyramid / Tree 系（ZoomPan ラップ済み） ─────────────────────────────
