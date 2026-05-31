@@ -5,7 +5,9 @@ import { FRAMEWORK_REGISTRY, FrameworkType } from '@/types'
 import { getCompatibleFrameworks } from '@/types/crossLinkCompatibility'
 
 // フレームワーク選択肢
-const FRAMEWORK_OPTIONS = Object.values(FrameworkType).map((fw) => ({
+const FRAMEWORK_OPTIONS: { value: FrameworkType; label: string }[] = (
+  Object.values(FrameworkType) as FrameworkType[]
+).map((fw) => ({
   value: fw,
   label: `${FRAMEWORK_REGISTRY[fw].icon} ${FRAMEWORK_REGISTRY[fw].label}`,
 }))
