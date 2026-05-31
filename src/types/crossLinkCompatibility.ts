@@ -60,12 +60,12 @@ export const CROSS_LINK_COMPAT: Readonly<
   [FrameworkType.PRIORITY_MATRIX]: [
     FrameworkType.SWOT, FrameworkType.CROSS_SWOT, FrameworkType.ABC,
     FrameworkType.ECRS, FrameworkType.ISSUE_TREE, FrameworkType.BSC,
-    FrameworkType.KPI, FrameworkType.QCD,
+    FrameworkType.KPI, FrameworkType.QCD, FrameworkType.PPM,
   ],
   [FrameworkType.AS_IS_TO_BE]: [
     FrameworkType.PHENOMENON_TO_ACTION, FrameworkType.ECRS, FrameworkType.HOW_TREE,
     FrameworkType.VSM, FrameworkType.YWT, FrameworkType.BUSINESS_FLOW,
-    FrameworkType.CUSTOMER_JOURNEY,
+    FrameworkType.CUSTOMER_JOURNEY, FrameworkType.DMAIC,
   ],
   [FrameworkType.PHENOMENON_TO_ACTION]: [
     FrameworkType.WHY_TREE, FrameworkType.HOW_TREE, FrameworkType.AS_IS_TO_BE,
