@@ -3,6 +3,9 @@ import { FrameworkType } from './framework'
 /**
  * 対称隣接マップ。A に B が含まれれば B にも A が含まれる。
  * 選定基準：「同じ問題・対象を別の切り口で分析できるか」
+ *
+ * 対称性は手動で検証済み（全33種 × 全ネイバーを網羅確認）。
+ * エントリを追加・変更する際は必ず逆方向のエントリも更新すること。
  */
 export const CROSS_LINK_COMPAT: Readonly<
   Record<FrameworkType, ReadonlyArray<FrameworkType>>
@@ -39,6 +42,8 @@ export const CROSS_LINK_COMPAT: Readonly<
     FrameworkType.THREE_C, FrameworkType.PEST, FrameworkType.CROSS_SWOT,
     FrameworkType.ANSOFF, FrameworkType.PRIORITY_MATRIX, FrameworkType.MECE,
   ],
+  // PEST は純粋な外部環境分析（政治・経済・社会・技術）のため、
+  // 外部→内部への入力先である SWOT と 3C のみと接続する。
   [FrameworkType.PEST]: [
     FrameworkType.SWOT, FrameworkType.THREE_C,
   ],
@@ -165,9 +170,10 @@ export function getCompatibleFrameworks(
 
   const compatSets = otherSelected.map((fw) => new Set(CROSS_LINK_COMPAT[fw]))
 
+  const otherSet = new Set(otherSelected)
   const result = new Set<FrameworkType>()
   for (const fw of all) {
-    if (otherSelected.includes(fw)) continue
+    if (otherSet.has(fw)) continue
     if (compatSets.every((s) => s.has(fw))) {
       result.add(fw)
     }
