@@ -2,6 +2,7 @@ import { useAICrossLink } from '@/hooks/useAICrossLink'
 import { useCrossLinkClassify } from '@/hooks/useCrossLinkClassify'
 import { useConfigStore, useCrossLinkStore } from '@/stores'
 import { FRAMEWORK_REGISTRY, FrameworkType } from '@/types'
+import { getCompatibleFrameworks } from '@/types/crossLinkCompatibility'
 
 // フレームワーク選択肢
 const FRAMEWORK_OPTIONS = Object.values(FrameworkType).map((fw) => ({
@@ -28,6 +29,24 @@ export function CrossLinkPanel() {
   const { classifySlot } = useCrossLinkClassify()
   const { suggestCrossLinks, isSuggesting } = useAICrossLink()
   const isAiMode = useConfigStore((s) => s.mode === 'ai' && Boolean(s.apiKey))
+
+  // 指定スロット以外のフレームワーク選択から互換セットを算出
+  const compatibleForSlot = (slotId: string): Set<FrameworkType> => {
+    const others = slots
+      .filter((s) => s.id !== slotId && s.frameworkType !== null)
+      .map((s) => s.frameworkType as FrameworkType)
+    return getCompatibleFrameworks(others)
+  }
+
+  // スロット追加ボタン: 全スロット選択済み時に3つ目の互換候補がなければ無効化
+  const canAddSlot = (() => {
+    if (slots.length >= 3) return false
+    const allSelected = slots
+      .filter((s) => s.frameworkType !== null)
+      .map((s) => s.frameworkType as FrameworkType)
+    if (allSelected.length < 2) return true
+    return getCompatibleFrameworks(allSelected).size > 0
+  })()
 
   const isAnyLoading = slots.some((s) => s.isLoading)
   const activeSlotCount = slots.filter((s) => s.graph && s.graph.nodes.length > 0).length
@@ -96,27 +115,54 @@ export function CrossLinkPanel() {
                 </button>
               )}
             </div>
-            <select
-              className="crosslink-slot__select"
-              value={slot.frameworkType ?? ''}
-              onChange={(e) => {
-                if (e.target.value) {
-                  setSlotFramework(slot.id, e.target.value as FrameworkType)
-                }
-              }}
-            >
-              <option value="">フレームワークを選択</option>
-              {FRAMEWORK_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+            {(() => {
+              const compat = compatibleForSlot(slot.id)
+              const constrained = slots.some(
+                (s) => s.id !== slot.id && s.frameworkType !== null,
+              )
+              const isIncompat =
+                slot.frameworkType !== null &&
+                constrained &&
+                !compat.has(slot.frameworkType)
+              return (
+                <>
+                  {isIncompat && (
+                    <div className="crosslink-slot__warning">
+                      ⚠ この組み合わせは非互換です
+                    </div>
+                  )}
+                  <select
+                    className="crosslink-slot__select"
+                    value={slot.frameworkType ?? ''}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setSlotFramework(slot.id, e.target.value as FrameworkType)
+                      }
+                    }}
+                  >
+                    <option value="">フレームワークを選択</option>
+                    {FRAMEWORK_OPTIONS.map((opt) => {
+                      const disabled =
+                        constrained && !compat.has(opt.value as FrameworkType)
+                      return (
+                        <option
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={disabled}
+                        >
+                          {opt.label}
+                        </option>
+                      )
+                    })}
+                  </select>
+                </>
+              )
+            })()}
           </div>
         ))}
 
         {/* スロット追加ボタン */}
-        {slots.length < 3 && (
+        {canAddSlot && (
           <button type="button" className="crosslink-add-slot" onClick={addSlot}>
             ＋
           </button>
