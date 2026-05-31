@@ -21,6 +21,7 @@ import { DMAICCanvas } from './DMAICCanvas'
 import { ECRSCanvas } from './ECRSCanvas'
 import { FourMCanvas } from './FourMCanvas'
 import { QCDCanvas } from './QCDCanvas'
+import { YWTCanvas } from './YWTCanvas'
 
 interface CanvasRouterProps {
   graph: FrameworkGraph | null
@@ -38,7 +39,6 @@ const matrixFrameworks = new Set<FrameworkType>([
   FrameworkType.STP,
   FrameworkType.PPM,
   FrameworkType.ABC,
-  FrameworkType.YWT,
   FrameworkType.SPIN,
 ])
 
@@ -118,6 +118,10 @@ export function CanvasRouter({
 
   if (graph.frameworkType === FrameworkType.QCD) {
     return withZoom(<QCDCanvas graph={graph} onNodeEdit={onNodeEdit} />)
+  }
+
+  if (graph.frameworkType === FrameworkType.YWT) {
+    return withZoom(<YWTCanvas graph={graph} onNodeEdit={onNodeEdit} />)
   }
 
   // ── Pyramid / Tree 系（ZoomPan ラップ済み） ─────────────────────────────
