@@ -60,9 +60,15 @@ export function useSpeechRecognition(
     }
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      // no-speech: Chrome fires this on silence timeout even with continuous=true.
+      // aborted: fired when recognition.abort() is called intentionally (cleanup).
+      // Both are non-fatal — let onend handle restart via shouldRestartRef.
+      if (event.error === 'no-speech' || event.error === 'aborted') {
+        return
+      }
+
       const messages: Partial<Record<SpeechRecognitionErrorCode, string>> = {
         'not-allowed': 'マイクへのアクセスが拒否されました。ブラウザの設定を確認してください。',
-        'no-speech': '音声が検出されませんでした。',
         network: 'ネットワークエラーが発生しました。',
         'audio-capture': 'マイクが見つかりません。',
       }

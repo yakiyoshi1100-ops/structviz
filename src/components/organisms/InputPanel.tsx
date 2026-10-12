@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { Button, TextArea } from '@/components/atoms'
 import { FileUploadTab, MicButton } from '@/components/molecules'
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
+import { useMicInput } from '@/hooks/useMicInput'
 import { useConfigStore, useUiStore } from '@/stores'
 
 type InputTab = 'text' | 'mic' | 'file'
@@ -66,7 +66,7 @@ export function InputPanel({
     onChange(nextValue)
   }
 
-  const { status, errorMessage, toggleListening, isSupported } = useSpeechRecognition(
+  const { status, errorMessage, toggleListening, isSupported } = useMicInput(
     (transcript, isFinal) => {
       if (isFinal) {
         appendText(transcript)

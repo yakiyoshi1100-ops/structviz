@@ -4,6 +4,7 @@ import type { FrameworkRuleSet } from '../ruleEngine'
 export const raciRules: FrameworkRuleSet = {
   framework: FrameworkType.RACI,
   rules: [
+    { patterns: ['タスク', '活動', '作業', '工程', 'フェーズ', '業務', 'Deliverable'], role: 'raci_task', weight: 0.9 },
     { patterns: ['実行', '担当', 'Responsible', '作業者', '実施者'], role: 'raci_responsible', weight: 1.0 },
     { patterns: ['説明責任', '承認', 'Accountable', '最終責任', 'オーナー'], role: 'raci_accountable', weight: 1.0 },
     { patterns: ['相談', '助言', 'Consulted', 'レビュー', '確認先'], role: 'raci_consulted', weight: 1.0 },

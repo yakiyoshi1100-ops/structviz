@@ -4,6 +4,16 @@ import { FRAMEWORK_REGISTRY, FrameworkType } from '@/types'
 const schemaText = JSON.stringify(RESPONSE_SCHEMA, null, 2)
 
 const frameworkInstructions: Partial<Record<FrameworkType, string>> = {
+  [FrameworkType.PYRAMID]: [
+    'ピラミッドストラクチャー（ミント原則）として論理を階層化してください。',
+    'conclusion: 最上位の結論・主張（1つだけ）',
+    'argument: 結論を直接支える論拠・理由（2〜4個）',
+    'evidence: 各論拠を裏付ける根拠・事実・データ・事例（各argumentに2〜4個）',
+    '【必須】edgesにノード間の接続を出力すること。',
+    '各ノードにid（例: "n1","n2","n3"）を付け、source→targetの形式で接続してください。',
+    '構造: conclusion→argument→evidence',
+    '（conclusionから各argumentへ、各argumentから対応するevidenceへ接続）',
+  ].join('\n'),
   [FrameworkType.MECE]: [
     'テキストを「漏れなく・重複なく（MECE）」の観点で構造化してください。',
     '【最重要】カテゴリは必ず3〜6個以内にすること。7個以上は絶対に禁止。多い場合は上位概念でグループ化して減らすこと。',
@@ -116,24 +126,59 @@ const frameworkInstructions: Partial<Record<FrameworkType, string>> = {
     'STP分析として、segmentation（市場細分化）/ targeting（ターゲット選定）/ positioning（立ち位置・差別化）に分類してください。',
   [FrameworkType.PPM]:
     'PPM分析として、star（花形：高成長×高シェア）/ cash_cow（金のなる木：低成長×高シェア）/ question_mark（問題児：高成長×低シェア）/ dog（負け犬：低成長×低シェア）に分類してください。',
-  [FrameworkType.BSC]:
-    'BSCとして、bsc_financial（財務）/ bsc_customer（顧客）/ bsc_process（内部プロセス）/ bsc_learning（学習と成長）の4視点に分類してください。',
-  [FrameworkType.KPI]:
-    'KPI分析として、kgi（最終目標）/ kpi（中間指標）/ kpi_action（具体的施策）の階層で分類し、ツリー構造で出力してください。',
+  [FrameworkType.BSC]: [
+    'BSC（バランススコアカード）の4視点に分類してください。',
+    'bsc_financial（財務・最終成果）/ bsc_customer（顧客価値）/ bsc_process（内部プロセス）/ bsc_learning（学習と成長・人材・IT）',
+    '各ノードはKPI・目標・施策を15〜30文字で具体的に。因果は下（学習）→上（財務）の順で考えること。',
+  ].join('\n'),
+  [FrameworkType.KPI]: [
+    'KPIツリーとして、目標達成の指標体系を階層的に分解してください。',
+    'kgi: 最終目標（Key Goal Indicator）。何を達成したいか。1〜2個',
+    'kpi: 重要業績指標（Key Performance Indicator）。KGIを測る中間指標。各kgiに3〜5個',
+    'kpi_action: 具体的施策・アクション。KPIを改善するための行動。各kpiに2〜4個',
+    '【必須】edgesにノード間の接続を出力すること。',
+    '各ノードにid（例: "n1","n2","n3"）を付け、source→targetの形式で接続してください。',
+    '構造: kgi→kpi→kpi_action（kgiが複数の場合は各kgiから関連kpiへ接続）',
+  ].join('\n'),
   [FrameworkType.ABC]:
     'ABC分析として、abc_high（A群：重点管理）/ abc_mid（B群：維持管理）/ abc_low（C群：見直し対象）に分類してください。',
-  [FrameworkType.RACI]:
-    'RACIチャートとして、raci_responsible（R:実行責任者）/ raci_accountable（A:説明責任者）/ raci_consulted（C:相談先）/ raci_informed（I:報告先）に分類してください。',
-  [FrameworkType.WBS]:
-    'WBSとして、wbs_root（プロジェクト全体）/ wbs_phase（フェーズ・工程）/ wbs_task（タスク）/ wbs_subtask（サブタスク）の階層で分類し、ツリー構造で出力してください。',
+  [FrameworkType.RACI]: [
+    'RACIチャート（活動×R/A/C/Iの表）として構造化してください。',
+    'raci_task: 活動・タスク・作業名（表の行見出し。1活動1ノード）',
+    'raci_responsible（R:実行責任）/ raci_accountable（A:説明責任）/ raci_consulted（C:相談）/ raci_informed（I:報告）: 担当者・役割名',
+    '【必須】R/A/C/Iノードには対応する raci_task の id を parentId に設定すること。',
+    'ラベルは担当者名のみ（活動名は raci_task に書く）。',
+  ].join('\n'),
+  [FrameworkType.WBS]: [
+    'WBS（Work Breakdown Structure）として、作業を階層的に分解してください。',
+    'wbs_root: プロジェクト全体（1つだけ）',
+    'wbs_phase: フェーズ・工程（wbs_rootを分解した大区分）。3〜5個',
+    'wbs_task: タスク（各フェーズの具体的な作業）。各phaseに2〜5個',
+    'wbs_subtask: サブタスク（タスクをさらに細分化した作業）。必要な場合のみ',
+    '【必須】edgesにノード間の接続を出力すること。',
+    '各ノードにid（例: "n1","n2","n3"）を付け、source→targetの形式で接続してください。',
+    '構造: wbs_root→wbs_phase→wbs_task→wbs_subtask',
+  ].join('\n'),
   [FrameworkType.YWT]:
     'YWT振り返りとして、did（やったこと）/ learned（わかったこと）/ next（次にやること）の3つに分類してください。',
   [FrameworkType.SPIN]:
     'SPIN話法として、spin_situation（状況質問）/ spin_problem（問題質問）/ spin_implication（示唆質問）/ spin_need（解決質問）に分類してください。',
-  [FrameworkType.CUSTOMER_JOURNEY]:
-    '顧客の体験を以下のフェーズに分類してください。\ncj_awareness（認知：知るきっかけ）/ cj_consideration（検討：比較・調査）/ cj_purchase（購入・契約）/ cj_retention（継続・定着・活用）/ cj_advocacy（推薦・口コミ・紹介）',
-  [FrameworkType.VSM]:
-    '業務・プロセスの流れを以下に分類してください。\nvsm_input（入力・受注）/ vsm_value_add（付加価値活動）/ vsm_non_value（非付加価値・無駄）/ vsm_output（出力・納品）/ vsm_bottleneck（ボトルネック・滞留）',
+  [FrameworkType.CUSTOMER_JOURNEY]: [
+    '顧客の体験を以下の5つのフェーズに分類してください。',
+    'フェーズ間の流れは固定のため edges は不要です（空配列 [] で構いません）。',
+    'cj_awareness: 課題・興味関心フェーズ（気になること・困りごとがある段階）',
+    'cj_consideration: 情報収集フェーズ（解決策・製品・サービスを調べる段階）',
+    'cj_purchase: 評価・比較検討フェーズ（商品を比較し購入を決断する段階）',
+    'cj_retention: 購入・継続フェーズ（購入後に使い続け価値を実感する段階）',
+    'cj_advocacy: 共有・拡散フェーズ（使用感をシェアし知人にすすめる段階）',
+    '各ノードのラベルは15〜30文字程度の具体的な行動・心理・施策にしてください。',
+  ].join('\n'),
+  [FrameworkType.VSM]: [
+    'バリューストリームマッピング（VSM）として、左から右への流れの順でノードを並べてください。',
+    'vsm_input（入力・受注）→ vsm_value_add（付加価値工程）→ vsm_non_value（待ち・在庫・非付加価値）→ vsm_bottleneck（ボトルネック）→ vsm_output（出力・納品）',
+    '工程と待ちは交互に現れることが多いです。ラベルは工程名・待ち理由を15〜30文字で具体的に。',
+    'edges は不要（空配列 [] で可）。',
+  ].join('\n'),
   [FrameworkType.DMAIC]:
     'シックスシグマのDMAICステップに分類してください。\ndmaic_define（Define：問題定義・スコープ設定）/ dmaic_measure（Measure：現状測定・データ収集）/ dmaic_analyze（Analyze：原因分析）/ dmaic_improve（Improve：改善策実施）/ dmaic_control（Control：管理・標準化・定着）',
 }

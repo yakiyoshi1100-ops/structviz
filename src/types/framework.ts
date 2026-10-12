@@ -300,7 +300,7 @@ export const FRAMEWORK_REGISTRY: Record<FrameworkType, FrameworkDefinition> = {
     description: '実行・説明責任・相談先・報告先で役割を明確にする',
     category: 'プロジェクト管理',
     visualization: 'matrix',
-    nodeRoles: ['raci_responsible', 'raci_accountable', 'raci_consulted', 'raci_informed'],
+    nodeRoles: ['raci_task', 'raci_responsible', 'raci_accountable', 'raci_consulted', 'raci_informed'],
   },
   [FrameworkType.WBS]: {
     type: FrameworkType.WBS,

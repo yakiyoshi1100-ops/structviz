@@ -100,6 +100,7 @@ export type NodeRole =
   | 'abc_high'
   | 'abc_mid'
   | 'abc_low'
+  | 'raci_task'
   | 'raci_responsible'
   | 'raci_accountable'
   | 'raci_consulted'
@@ -130,6 +131,10 @@ export type NodeRole =
   | 'dmaic_analyze'
   | 'dmaic_improve'
   | 'dmaic_control'
+  | 'three_c_target'
+  | 'three_c_red_ocean'
+  | 'three_c_comp_adv'
+  | 'three_c_core'
 
 export interface StructuredNode {
   id: string

@@ -20,6 +20,7 @@ export interface UiStore {
   inputPanelExpanded: boolean
   sidebarCollapsed: boolean
   settingsPanelOpen: boolean
+  tanaoroshiPanelOpen: boolean
   exportMenuOpen: boolean
   floatingPanelPosition: FloatingPanelPosition
   floatingPanelCollapsed: boolean
@@ -28,6 +29,7 @@ export interface UiStore {
   toggleInputPanel: () => void
   toggleSidebarCollapse: () => void
   toggleSettings: () => void
+  toggleTanaoroshi: () => void
   toggleExportMenu: () => void
   setFloatingPosition: (position: FloatingPanelPosition) => void
   setFloatingCollapsed: (collapsed: boolean) => void
@@ -51,6 +53,7 @@ export const useUiStore = create<UiStore>((set) => ({
   inputPanelExpanded: true,
   sidebarCollapsed: false,
   settingsPanelOpen: false,
+  tanaoroshiPanelOpen: false,
   exportMenuOpen: false,
   floatingPanelPosition: getStoredFloatingPanelPosition(),
   floatingPanelCollapsed: false,
@@ -64,6 +67,7 @@ export const useUiStore = create<UiStore>((set) => ({
   toggleSidebarCollapse: () =>
     set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   toggleSettings: () => set((state) => ({ settingsPanelOpen: !state.settingsPanelOpen })),
+  toggleTanaoroshi: () => set((state) => ({ tanaoroshiPanelOpen: !state.tanaoroshiPanelOpen })),
   toggleExportMenu: () => set((state) => ({ exportMenuOpen: !state.exportMenuOpen })),
   setFloatingPosition: (floatingPanelPosition) => {
     set({ floatingPanelPosition })

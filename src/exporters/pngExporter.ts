@@ -1,19 +1,15 @@
-import html2canvas from 'html2canvas'
+import { toBlob } from 'html-to-image'
+
+const HTML_TO_IMAGE_OPTS = {
+  pixelRatio: 2,
+  backgroundColor: '#ffffff',
+  skipAutoScale: false,
+} as const
 
 export async function exportPng(canvasEl: HTMLElement, filename: string): Promise<void> {
-  const canvas = await html2canvas(canvasEl, {
-    scale: 2,
-    backgroundColor: '#ffffff',
-    useCORS: true,
-  })
-
-  canvas.toBlob((blob) => {
-    if (!blob) {
-      return
-    }
-
-    downloadBlob(blob, `${filename}.png`)
-  }, 'image/png')
+  const blob = await toBlob(canvasEl, HTML_TO_IMAGE_OPTS)
+  if (!blob) throw new Error('PNG Blob の生成に失敗しました')
+  downloadBlob(blob, `${filename}.png`)
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {
@@ -21,6 +17,8 @@ export function downloadBlob(blob: Blob, filename: string): void {
   const a = document.createElement('a')
   a.href = url
   a.download = filename
+  document.body.appendChild(a)
   a.click()
+  document.body.removeChild(a)
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }

@@ -1,10 +1,22 @@
 import type { StructuredEdge, StructuredNode } from '@/types'
 
-const NODE_WIDTH = 220
+const NODE_WIDTH  = 220
 const NODE_HEIGHT = 90
-const H_GAP = 120
-const V_GAP = 40
+const H_GAP       = 120
+const V_GAP       = 40
 
+/**
+ * Tree layout that centres every parent node over its children vertically.
+ *
+ * Approach (simplified Reingold–Tilford):
+ *  1. Traverse the tree depth-first.
+ *  2. Leaf nodes (no children in the tree) are assigned sequential y-slots
+ *     top-to-bottom.
+ *  3. Each internal node is placed at the vertical midpoint between its
+ *     first and last child's y-centre, eliminating edge crossings caused
+ *     by uniform-spacing layouts.
+ *  4. The whole diagram is shifted to be vertically centred at y = 0.
+ */
 export function applyTreeLayout(
   nodes: StructuredNode[],
   edges: StructuredEdge[],
@@ -12,76 +24,70 @@ export function applyTreeLayout(
 ): StructuredNode[] {
   if (nodes.length === 0) return nodes
 
-  const childrenMap = new Map<string, string[]>()
-  const hasParent = new Set<string>()
+  const nodeIds = new Set(nodes.map(n => n.id))
 
-  edges.forEach((edge) => {
-    if (!childrenMap.has(edge.source)) childrenMap.set(edge.source, [])
-    childrenMap.get(edge.source)!.push(edge.target)
-    hasParent.add(edge.target)
+  // ── build adjacency ─────────────────────────────────────────────────────
+  const childrenOf = new Map<string, string[]>()
+  const hasParent  = new Set<string>()
+  nodes.forEach(n => childrenOf.set(n.id, []))
+  edges.forEach(e => {
+    if (nodeIds.has(e.source) && nodeIds.has(e.target)) {
+      childrenOf.get(e.source)!.push(e.target)
+      hasParent.add(e.target)
+    }
   })
 
-  const roots = nodes.filter((node) => !hasParent.has(node.id))
-  const rootIds = roots.length > 0 ? roots.map((root) => root.id) : [nodes[0].id]
-  const depthMap = new Map<string, number>()
-  const queue: { id: string; depth: number }[] = rootIds.map((id) => ({ id, depth: 0 }))
+  // ── roots = nodes with no incoming edge ─────────────────────────────────
+  const rootNodes = nodes.filter(n => !hasParent.has(n.id))
+  const rootIds   = rootNodes.length > 0
+    ? rootNodes.map(r => r.id)
+    : [nodes[0].id]
 
-  while (queue.length > 0) {
-    const { id, depth } = queue.shift()!
+  // ── recursive layout ─────────────────────────────────────────────────────
+  const positionMap = new Map<string, { x: number; y: number }>()
+  const leafSlot    = { n: 0 }   // shared mutable counter for leaf slots
 
-    if (depthMap.has(id)) continue
+  function layoutNode(id: string, depth: number): number {
+    const children = childrenOf.get(id) ?? []
+    const x = depth * (NODE_WIDTH + H_GAP)
 
-    depthMap.set(id, depth)
+    if (children.length === 0) {
+      // Leaf: claim the next sequential slot
+      const y = leafSlot.n * (NODE_HEIGHT + V_GAP)
+      leafSlot.n++
+      positionMap.set(id, { x, y })
+      return y
+    }
 
-    const children = childrenMap.get(id) ?? []
-    children.forEach((childId) => {
-      if (!depthMap.has(childId)) {
-        queue.push({ id: childId, depth: depth + 1 })
-      }
-    })
+    // Internal node: lay out all children first, then centre this node
+    // at the midpoint between the first child's top and the last child's bottom.
+    const childCenters = children.map(c => layoutNode(c, depth + 1))
+    const y = (Math.min(...childCenters) + Math.max(...childCenters)) / 2
+    positionMap.set(id, { x, y })
+    return y
   }
 
-  nodes.forEach((node) => {
-    if (!depthMap.has(node.id)) depthMap.set(node.id, 0)
-  })
+  rootIds.forEach(r => layoutNode(r, 0))
 
-  const byDepth = new Map<number, StructuredNode[]>()
-
-  nodes.forEach((node) => {
-    const depth = depthMap.get(node.id) ?? 0
-    if (!byDepth.has(depth)) byDepth.set(depth, [])
-    byDepth.get(depth)!.push(node)
-  })
-
-  const positionMap = new Map<string, { x: number; y: number }>()
-  const sortedDepths = Array.from(byDepth.keys()).sort((a, b) => a - b)
-
-  sortedDepths.forEach((depth) => {
-    const layerNodes = byDepth.get(depth)!
-    const totalHeight = layerNodes.length * NODE_HEIGHT + V_GAP * Math.max(layerNodes.length - 1, 0)
-    let cursorY = -totalHeight / 2
-
-    layerNodes.forEach((node) => {
-      const x = depth * (NODE_WIDTH + H_GAP)
-      const y = cursorY
-      positionMap.set(node.id, { x, y })
-      cursorY += NODE_HEIGHT + V_GAP
-    })
-  })
-
-  return nodes.map((node) => {
-    const pos = positionMap.get(node.id) ?? { x: 0, y: 0 }
-    let finalPos = pos
-
-    if (rankdir === 'BT') {
-      finalPos = { x: pos.x, y: -pos.y }
-    } else if (rankdir === 'TB') {
-      finalPos = { x: pos.y, y: pos.x }
+  // Any orphaned nodes (not reachable from any root) are stacked below
+  nodes.forEach(n => {
+    if (!positionMap.has(n.id)) {
+      const y = leafSlot.n * (NODE_HEIGHT + V_GAP)
+      leafSlot.n++
+      positionMap.set(n.id, { x: 0, y })
     }
+  })
 
-    return {
-      ...node,
-      position: finalPos,
-    }
+  // ── centre the whole diagram at y = 0 ───────────────────────────────────
+  const ys          = Array.from(positionMap.values()).map(p => p.y)
+  const centerShift = (Math.min(...ys) + Math.max(...ys)) / 2
+
+  return nodes.map(n => {
+    const { x, y } = positionMap.get(n.id)!
+    const cy = y - centerShift    // vertically centred y
+
+    if (rankdir === 'BT') return { ...n, position: { x,  y: -cy } }
+    if (rankdir === 'TB') return { ...n, position: { x: cy, y: x  } }
+    return                        { ...n, position: { x,  y: cy  } }
   })
 }

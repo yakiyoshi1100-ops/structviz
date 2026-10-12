@@ -6,10 +6,17 @@ export interface MatrixCellConfig {
   color: string
 }
 
+export interface AxisConfig {
+  title?: string   // 軸タイトル（例: "製品", "市場"）
+  labels: string[] // セグメントラベル（例: ["既存", "新規"]）
+}
+
 export interface MatrixConfig {
   cells: MatrixCellConfig[][]
   rows: number
   cols: number
+  colAxis?: AxisConfig  // 横軸（グリッド上部）
+  rowAxis?: AxisConfig  // 縦軸（グリッド左側）
 }
 
 const c = {
@@ -29,13 +36,15 @@ export function getMatrixConfig(framework: FrameworkType): MatrixConfig {
       return {
         rows: 2,
         cols: 2,
+        colAxis: { labels: ['プラス要因', 'マイナス要因'] },
+        rowAxis: { labels: ['内部環境', '外部環境'] },
         cells: [
           [
             { role: 'strength', label: '強み\nStrength', color: c.green },
-            { role: 'opportunity', label: '機会\nOpportunity', color: c.blue },
+            { role: 'weakness', label: '弱み\nWeakness', color: c.orange },
           ],
           [
-            { role: 'weakness', label: '弱み\nWeakness', color: c.orange },
+            { role: 'opportunity', label: '機会\nOpportunity', color: c.blue },
             { role: 'threat', label: '脅威\nThreat', color: c.red },
           ],
         ],
@@ -44,14 +53,16 @@ export function getMatrixConfig(framework: FrameworkType): MatrixConfig {
       return {
         rows: 2,
         cols: 2,
+        colAxis: { title: '製品', labels: ['既存', '新規'] },
+        rowAxis: { title: '市場', labels: ['既存', '新規'] },
         cells: [
           [
-            { role: 'market-penetration', label: '市場浸透\n既存市場×既存製品', color: c.green },
-            { role: 'product-development', label: '新製品開発\n既存市場×新製品', color: c.blue },
+            { role: 'market-penetration', label: '市場浸透', color: c.green },
+            { role: 'product-development', label: '新製品開発', color: c.blue },
           ],
           [
-            { role: 'market-development', label: '市場開拓\n新市場×既存製品', color: c.orange },
-            { role: 'diversification', label: '多角化\n新市場×新製品', color: c.red },
+            { role: 'market-development', label: '市場開拓', color: c.orange },
+            { role: 'diversification', label: '多角化', color: c.red },
           ],
         ],
       }
@@ -59,14 +70,16 @@ export function getMatrixConfig(framework: FrameworkType): MatrixConfig {
       return {
         rows: 2,
         cols: 2,
+        colAxis: { title: '内部環境', labels: ['強み', '弱み'] },
+        rowAxis: { title: '外部環境', labels: ['機会', '脅威'] },
         cells: [
           [
-            { role: 'so_strategy', label: 'SO戦略\n強み×機会', color: c.green },
-            { role: 'wo_strategy', label: 'WO戦略\n弱み×機会', color: c.blue },
+            { role: 'so_strategy', label: 'SO戦略\n強みで機会を掴む', color: c.green },
+            { role: 'wo_strategy', label: 'WO戦略\n弱みを補い機会を活かす', color: c.blue },
           ],
           [
-            { role: 'st_strategy', label: 'ST戦略\n強み×脅威', color: c.orange },
-            { role: 'wt_strategy', label: 'WT戦略\n弱み×脅威', color: c.red },
+            { role: 'st_strategy', label: 'ST戦略\n強みで脅威を回避', color: c.orange },
+            { role: 'wt_strategy', label: 'WT戦略\n弱み・脅威の最小化', color: c.red },
           ],
         ],
       }
@@ -74,14 +87,16 @@ export function getMatrixConfig(framework: FrameworkType): MatrixConfig {
       return {
         rows: 2,
         cols: 2,
+        colAxis: { title: '実行難易度', labels: ['簡単', '難しい'] },
+        rowAxis: { title: '効果・影響度', labels: ['高い', '低い'] },
         cells: [
           [
-            { role: 'high_impact_easy', label: '最優先\n効果大×簡単', color: c.green },
-            { role: 'high_impact_hard', label: '中長期\n効果大×難しい', color: c.blue },
+            { role: 'high_impact_easy', label: '最優先', color: c.green },
+            { role: 'high_impact_hard', label: '中長期で対応', color: c.blue },
           ],
           [
-            { role: 'low_impact_easy', label: '余力で\n効果小×簡単', color: c.orange },
-            { role: 'low_impact_hard', label: 'やらない\n効果小×難しい', color: c.red },
+            { role: 'low_impact_easy', label: '余力があれば', color: c.orange },
+            { role: 'low_impact_hard', label: 'やらない', color: c.red },
           ],
         ],
       }
@@ -89,14 +104,16 @@ export function getMatrixConfig(framework: FrameworkType): MatrixConfig {
       return {
         rows: 2,
         cols: 2,
+        colAxis: { title: '市場シェア', labels: ['高い', '低い'] },
+        rowAxis: { title: '市場成長率', labels: ['高い', '低い'] },
         cells: [
           [
-            { role: 'star', label: '花形\n高成長×高シェア', color: c.yellow },
-            { role: 'question_mark', label: '問題児\n高成長×低シェア', color: c.blue },
+            { role: 'star', label: '花形\nStar', color: c.yellow },
+            { role: 'question_mark', label: '問題児\nQuestion Mark', color: c.blue },
           ],
           [
-            { role: 'cash_cow', label: '金のなる木\n低成長×高シェア', color: c.green },
-            { role: 'dog', label: '負け犬\n低成長×低シェア', color: c.slate },
+            { role: 'cash_cow', label: '金のなる木\nCash Cow', color: c.green },
+            { role: 'dog', label: '負け犬\nDog', color: c.slate },
           ],
         ],
       }

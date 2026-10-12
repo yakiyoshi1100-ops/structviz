@@ -126,6 +126,7 @@ const nodeRoles = [
   'abc_high',
   'abc_mid',
   'abc_low',
+  'raci_task',
   'raci_responsible',
   'raci_accountable',
   'raci_consulted',

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { Button, IconButton, TextArea } from '@/components/atoms'
 import { MicButton } from '@/components/molecules'
-import { useSpeechRecognition } from '@/hooks/useSpeechRecognition'
+import { useMicInput } from '@/hooks/useMicInput'
 
 interface FloatingInputPanelProps {
   text: string
@@ -30,7 +30,7 @@ export function FloatingInputPanel({
     textRef.current = text
   }, [text])
 
-  const { status, errorMessage, toggleListening, isSupported } = useSpeechRecognition(
+  const { status, errorMessage, toggleListening, isSupported } = useMicInput(
     (transcript, isFinal) => {
       if (isFinal) {
         const nextText = textRef.current + (textRef.current ? '。' : '') + transcript

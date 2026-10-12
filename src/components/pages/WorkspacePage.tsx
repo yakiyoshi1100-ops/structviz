@@ -7,6 +7,7 @@ import {
   FrameworkSidebar,
   InputPanel,
   SettingsPanel,
+  TanaoroshiPanel,
   ToastContainer,
   UnclassifiedBuffer,
 } from '@/components/organisms'
@@ -48,9 +49,11 @@ export function WorkspacePage() {
   const floatingPanelCollapsed = useUiStore((state) => state.floatingPanelCollapsed)
   const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed)
   const settingsPanelOpen = useUiStore((state) => state.settingsPanelOpen)
+  const tanaoroshiPanelOpen = useUiStore((state) => state.tanaoroshiPanelOpen)
   const setFloatingCollapsed = useUiStore((state) => state.setFloatingCollapsed)
   const toggleSidebarCollapse = useUiStore((state) => state.toggleSidebarCollapse)
   const toggleSettings = useUiStore((state) => state.toggleSettings)
+  const toggleTanaoroshi = useUiStore((state) => state.toggleTanaoroshi)
   const { onStructurize } = useClassification()
   const { onExport } = useExport(canvasRef)
   const crossSlots = useCrossLinkStore((s) => s.slots)
@@ -126,6 +129,7 @@ export function WorkspacePage() {
         <ModeToggle mode={viewMode} onChange={setViewMode} aiReady={isAiReady} />
         {mode === 'ai' && <Badge label="AIモード" color="purple" />}
         <ExportMenu onExport={onExport} disabled={!graph} />
+        <IconButton icon="📋" label="棚卸し検査" onClick={toggleTanaoroshi} />
         <IconButton icon="⚙" label="設定" onClick={toggleSettings} />
       </div>
     </header>
@@ -143,6 +147,7 @@ export function WorkspacePage() {
   const overlays = (
     <>
       <SettingsPanel open={settingsPanelOpen} onClose={toggleSettings} />
+      <TanaoroshiPanel open={tanaoroshiPanelOpen} onClose={toggleTanaoroshi} />
       <ToastContainer />
     </>
   )
@@ -150,7 +155,11 @@ export function WorkspacePage() {
   if (viewMode === 'presentation') {
     return (
       <>
-        <PresentationLayout canvas={canvas} floatingInput={floatingInput} />
+        <PresentationLayout
+          canvas={canvas}
+          floatingInput={floatingInput}
+          exportMenu={<ExportMenu onExport={onExport} disabled={!graph} />}
+        />
         {overlays}
       </>
     )
